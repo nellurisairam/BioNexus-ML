@@ -160,7 +160,7 @@ def get_authenticator_config():
             'username': 'admin',
             'email': 'admin@example.com',
             'name': 'System Admin',
-            'password': '$2y$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGGa31S.',
+            'password': '$2b$12$TRtouVHjBrfeC72JUq.TauKlkNTByD4ZqfQ8bddHwkioFnIJwvwS6',
             'roles': ['admin', 'user'],
             'role': 'admin',
             'approved': True,

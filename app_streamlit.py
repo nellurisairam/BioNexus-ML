@@ -33,7 +33,7 @@ from database_utils import (
 from threading import Thread
 
 # 1.0 ROOT DIR SETUP
-ROOT_DIR = Path(__file__).parent.parent
+ROOT_DIR = Path(__file__).parent
 
 # 1. MUST BE FIRST
 st.set_page_config(page_title="Bioreactor ML Dashboard", layout="wide")

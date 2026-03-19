@@ -1,0 +1,11 @@
+streamlit
+streamlit-authenticator
+scikit-learn
+pandas
+numpy
+matplotlib
+seaborn
+joblib
+pyyaml
+pathlib
+ipykernel

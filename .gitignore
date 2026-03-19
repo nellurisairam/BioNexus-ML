@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+venv/
+ENV/
+.venv/
+
+# Databases
+*.db
+*.sqlite3
+
+# Project specific
+outputs/
+new.py
+predict.txt
+streamlit.txt
+scope*.txt
+run_dashboard.bat
+run_dashboard - Shortcut.lnk
+
+# Mac/Windows metadata
+.DS_Store
+Thumbs.db

@@ -1,0 +1,35 @@
+{
+  "target": "Product_Titer_gL",
+  "features": [
+    "Time_hours",
+    "Temperature_C",
+    "pH",
+    "Dissolved_Oxygen_percent",
+    "Glucose_gL",
+    "Agitation_RPM",
+    "Cell_Viability_percent",
+    "Glucose_Consumption_Rate",
+    "DO_Change",
+    "Specific_Productivity",
+    "Agitation_Normalized",
+    "High_Titer_Flag",
+    "Low_Viability_Flag"
+  ],
+  "dtypes": {
+    "Time_hours": "int64",
+    "Temperature_C": "float64",
+    "pH": "float64",
+    "Dissolved_Oxygen_percent": "float64",
+    "Glucose_gL": "float64",
+    "Agitation_RPM": "float64",
+    "Cell_Viability_percent": "float64",
+    "Glucose_Consumption_Rate": "float64",
+    "DO_Change": "float64",
+    "Specific_Productivity": "float64",
+    "Agitation_Normalized": "float64",
+    "High_Titer_Flag": "int64",
+    "Low_Viability_Flag": "int64"
+  },
+  "trained_rows": 994,
+  "trained_cols": 14
+}

@@ -17,36 +17,44 @@
 
 ```mermaid
 flowchart TD
-    A([👤 User / Admin]) --> B[Open App URL\nStreamlit Cloud / localhost]
-    B --> C{Authenticated?}
+    %% Styling
+    classDef user fill:#ff9900,stroke:#333,stroke-width:2px,color:#fff
+    classDef auth fill:#e91e63,stroke:#333,stroke-width:2px,color:#fff
+    classDef db fill:#00c853,stroke:#333,stroke-width:2px,color:#fff
+    classDef cloud fill:#29b6f6,stroke:#333,stroke-width:2px,color:#000
+    classDef action fill:#ab47bc,stroke:#333,stroke-width:2px,color:#fff
+    classDef page fill:#455a64,stroke:#333,stroke-width:2px,color:#fff
 
-    C -- No --> D[Login Form\nSidebar]
+    A([👤 User / Admin]):::user --> B[Open App URL\nStreamlit Cloud / localhost]:::cloud
+    B --> C{Authenticated?}:::auth
+
+    C -- No --> D[Login Form\nSidebar]:::auth
     D -- Invalid --> D
-    D -- Valid --> E[Check Approval Status\nNeon Postgres]
-    E -- Pending --> F[⏳ Awaiting Admin Approval]
-    E -- Approved --> G[🏠 Dashboard Loaded]
+    D -- Valid --> E[Check Approval Status\nNeon Postgres]:::db
+    E -- Pending --> F[⏳ Awaiting Admin Approval]:::auth
+    E -- Approved --> G[🏠 Dashboard Loaded]:::page
 
-    C -- No --> H[Register New Account\nSidebar Form]
-    H --> I[Save to Neon Postgres\napproved = false]
+    C -- No --> H[Register New Account\nSidebar Form]:::auth
+    H --> I[Save to Neon Postgres\napproved = false]:::db
     I --> F
 
-    G --> J{User Role?}
+    G --> J{User Role?}:::auth
 
-    J -- Admin --> K[🔑 Admin Console\nSidebar]
-    K --> K1[Approve / Revoke Users]
-    K --> K2[Change Roles]
-    K --> K3[Delete Users]
+    J -- Admin --> K[🔑 Admin Console\nSidebar]:::page
+    K --> K1[Approve / Revoke Users]:::action
+    K --> K2[Change Roles]:::action
+    K --> K3[Delete Users]:::action
 
-    J -- All Users --> L[Dashboard Tabs]
+    J -- All Users --> L[Dashboard Tabs]:::page
 
-    L --> T1[🚀 Predict & Benchmark\nUpload CSV → ML Pipeline\n→ Titer Prediction + Metrics]
-    L --> T2[🏋️ Train Model\nUpload Training CSV\n→ Fit Random Forest]
-    L --> T3[📊 Data Exploration\nCorrelation Heatmap\nTime-Series / Distributions]
-    L --> T4[📜 Prediction History\nView & Delete Past Sessions]
-    L --> T5[📘 Interpretation Guide\nProcess Parameter Reference]
-    L --> T6[🔔 Alerts\nConfigure Email SMTP\nThreshold Triggers]
+    L --> T1[🚀 Predict & Benchmark\nUpload CSV → ML Pipeline\n→ Titer Prediction + Metrics]:::page
+    L --> T2[🏋️ Train Model\nUpload Training CSV\n→ Fit Random Forest]:::page
+    L --> T3[📊 Data Exploration\nCorrelation Heatmap\nTime-Series / Distributions]:::page
+    L --> T4[📜 Prediction History\nView & Delete Past Sessions]:::page
+    L --> T5[📘 Interpretation Guide\nProcess Parameter Reference]:::page
+    L --> T6[🔔 Alerts\nConfigure Email SMTP\nThreshold Triggers]:::page
 
-    T1 --> DB[(🗄️ Neon Postgres\ncloud persistent)]
+    T1 --> DB[(🗄️ Neon Postgres\ncloud persistent)]:::db
     T4 --> DB
     T6 --> DB
     K1 --> DB
@@ -54,14 +62,14 @@ flowchart TD
     K3 --> DB
 
     subgraph Deployment["☁️ Deployment"]
-        SC[Streamlit Cloud\nauto-deploy on git push to main]
+        SC[Streamlit Cloud\nauto-deploy on git push to main]:::cloud
         DB
     end
 
     subgraph ML Pipeline
-        M1[Pre-trained .joblib Model]
-        M2[Feature Engineering\nGlucose Rate, DO Change,\nSpecific Productivity, Flags]
-        M3[Prediction Output\nProduct Titer g/L]
+        M1[Pre-trained .joblib Model]:::action
+        M2[Feature Engineering\nGlucose Rate, DO Change,\nSpecific Productivity, Flags]:::action
+        M3[Prediction Output\nProduct Titer g/L]:::action
         M2 --> M1 --> M3
     end
 

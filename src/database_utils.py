@@ -65,6 +65,17 @@ def init_db():
     )
     ''')
     
+    # Default configuration if empty
+    cursor.execute("SELECT COUNT(*) FROM config WHERE key = 'cookie'")
+    if cursor.fetchone()[0] == 0:
+        default_cookie = {
+            'expiry_days': 30,
+            'key': 'some_very_secret_key_123',
+            'name': 'bionexus_cookie'
+        }
+        cursor.execute("INSERT INTO config (key, value) VALUES (?, ?)", 
+                       ("cookie", json.dumps(default_cookie)))
+
     conn.commit()
     conn.close()
 
@@ -137,7 +148,11 @@ def get_authenticator_config():
     
     return {
         'credentials': {'usernames': usernames},
-        'cookie': cookie,
+        'cookie': cookie if cookie else {
+            'expiry_days': 30,
+            'key': 'some_very_secret_key_123',
+            'name': 'bionexus_cookie'
+        },
         'preauthorized': {'emails': []}
     }
 

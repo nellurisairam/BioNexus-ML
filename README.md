@@ -59,8 +59,8 @@ flowchart TD
     AuthGate -->|Token Validation| AuthMgr
     AuthMgr -->|Query Metadata| DB
     
-    AuthGate -->|Authorized (Admin)| AdminGUI
-    AuthGate -->|Authorized (User)| DashGUI
+    AuthGate -->|"Authorized (Admin)"| AdminGUI
+    AuthGate -->|"Authorized (User)"| DashGUI
 
     AdminGUI -->|Role Mutations| UserMgr
     UserMgr -.->|Write Auth Data| DB

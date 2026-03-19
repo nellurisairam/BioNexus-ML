@@ -32,6 +32,9 @@ from database_utils import (
 )
 from threading import Thread
 
+# 1.0 ROOT DIR SETUP
+ROOT_DIR = Path(__file__).parent.parent
+
 # 1. MUST BE FIRST
 st.set_page_config(page_title="Bioreactor ML Dashboard", layout="wide")
 
@@ -51,7 +54,7 @@ def set_design(theme="Light", is_authenticated=False):
     bg_img = ""
     try:
         # Check assets folder for background
-        bg_path = Path("assets/background.png")
+        bg_path = ROOT_DIR / "assets/background.png"
         if bg_path.exists():
             bg_data = get_img_with_href(str(bg_path))
             bg_img = f"url({bg_data})"
@@ -702,20 +705,20 @@ with tab_predict:
     model_choice = st.sidebar.selectbox(
         "Select default model path",
         options=[
-            'models/model_ridgecv.joblib',
-            'models/model_gbr.joblib',
-            'models/model_linear.joblib',
+            str(ROOT_DIR / 'models/model_ridgecv.joblib'),
+            str(ROOT_DIR / 'models/model_gbr.joblib'),
+            str(ROOT_DIR / 'models/model_linear.joblib'),
             'Custom...'
         ],
         index=0
     )
 
     if model_choice == 'Custom...':
-        model_path = st.sidebar.text_input("Model path (.joblib)", value='models/model_ridgecv.joblib')
+        model_path = st.sidebar.text_input("Model path (.joblib)", value=str(ROOT_DIR / 'models/model_ridgecv.joblib'))
     else:
         model_path = model_choice
 
-    schema_path = st.sidebar.text_input("Schema path (.json)", value='models/feature_schema.json')
+    schema_path = st.sidebar.text_input("Schema path (.json)", value=str(ROOT_DIR / 'models/feature_schema.json'))
 
     st.sidebar.markdown("---")
     mode = st.sidebar.radio("Mode", ["Predict (unlabeled)", "Benchmark (labeled)"]) 
@@ -728,16 +731,17 @@ with tab_predict:
     # File input
     st.subheader("📥 Input Data")
     upload = st.file_uploader("Upload CSV (new_samples or labeled data)", type=['csv'])
-    use_sample = st.checkbox("Use local sample file: data/bioreactor_ml_dataset.csv (if present)")
+    sample_file_path = ROOT_DIR / 'data/bioreactor_ml_dataset.csv'
+    use_sample = st.checkbox(f"Use local sample file: {sample_file_path.name} (if present)")
 
     input_df = None
     src_desc = None
     if upload is not None:
         input_df = read_csv(upload)
         src_desc = f"Uploaded file: `{upload.name}`"
-    elif use_sample and Path('data/bioreactor_ml_dataset.csv').exists():
-        input_df = read_csv('data/bioreactor_ml_dataset.csv')
-        src_desc = "Local sample: `data/bioreactor_ml_dataset.csv`"
+    elif use_sample and sample_file_path.exists():
+        input_df = read_csv(str(sample_file_path))
+        src_desc = f"Local sample: `{sample_file_path.name}`"
     else:
         st.info("Upload a CSV or check 'Use local sample file' to proceed.")
 

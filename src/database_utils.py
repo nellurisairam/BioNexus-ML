@@ -8,7 +8,8 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-DB_PATH = "users.db"
+# Ensure users.db is created in the project root, not src/
+DB_PATH = str(Path(__file__).parent.parent / "users.db")
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)

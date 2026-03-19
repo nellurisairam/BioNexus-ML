@@ -1,5 +1,5 @@
-import sqlite3
 import json
+import os
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional, Any
@@ -9,31 +9,54 @@ import bcrypt
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-# Database is in the same folder
-DB_PATH = "users.db"
+import psycopg2
+from psycopg2.extras import RealDictCursor
+import streamlit as st
 
+# ─────────────────────────────────────────────
+# Connection helper
+# ─────────────────────────────────────────────
+def get_connection():
+    """Return a psycopg2 connection to Neon Postgres."""
+    # Try Streamlit secrets first (cloud deployment)
+    try:
+        conn_str = st.secrets["NEON_DATABASE_URL"]
+    except Exception:
+        # Fall back to environment variable (local dev)
+        conn_str = os.environ.get("NEON_DATABASE_URL", "")
+
+    if not conn_str:
+        raise RuntimeError(
+            "NEON_DATABASE_URL not set. Add it to Streamlit Secrets or your .env file."
+        )
+    return psycopg2.connect(conn_str)
+
+
+# ─────────────────────────────────────────────
+# Schema initialisation
+# ─────────────────────────────────────────────
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     cursor = conn.cursor()
-    
+
     # Users table
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS users (
-        username TEXT PRIMARY KEY,
-        email TEXT,
-        name TEXT,
-        password TEXT,
-        role TEXT,
-        roles TEXT,
-        approved BOOLEAN DEFAULT 0,
-        logged_in BOOLEAN DEFAULT 0
+        username   TEXT PRIMARY KEY,
+        email      TEXT,
+        name       TEXT,
+        password   TEXT,
+        role       TEXT,
+        roles      TEXT,
+        approved   BOOLEAN DEFAULT FALSE,
+        logged_in  BOOLEAN DEFAULT FALSE
     )
     ''')
-    
-    # Config table (for cookie and other global settings)
+
+    # Config table
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS config (
-        key TEXT PRIMARY KEY,
+        key   TEXT PRIMARY KEY,
         value TEXT
     )
     ''')
@@ -41,11 +64,11 @@ def init_db():
     # Predictions table
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS predictions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT NOT NULL,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        inputs TEXT NOT NULL,
-        results TEXT NOT NULL,
+        id         SERIAL PRIMARY KEY,
+        username   TEXT NOT NULL,
+        timestamp  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        inputs     TEXT NOT NULL,
+        results    TEXT NOT NULL,
         model_name TEXT,
         FOREIGN KEY (username) REFERENCES users (username)
     )
@@ -54,20 +77,20 @@ def init_db():
     # Alerts table
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS alerts (
-        username TEXT PRIMARY KEY,
-        email_enabled BOOLEAN DEFAULT 0,
-        target_email TEXT,
+        username        TEXT PRIMARY KEY,
+        email_enabled   BOOLEAN DEFAULT FALSE,
+        target_email    TEXT,
         titer_threshold FLOAT DEFAULT 5.0,
-        condition TEXT DEFAULT 'above',
-        smtp_server TEXT,
-        smtp_port INTEGER DEFAULT 587,
-        smtp_user TEXT,
-        smtp_pass TEXT,
+        condition       TEXT DEFAULT 'above',
+        smtp_server     TEXT,
+        smtp_port       INTEGER DEFAULT 587,
+        smtp_user       TEXT,
+        smtp_pass       TEXT,
         FOREIGN KEY (username) REFERENCES users (username)
     )
     ''')
-    
-    # Default configuration if empty
+
+    # Default cookie config
     cursor.execute("SELECT COUNT(*) FROM config WHERE key = 'cookie'")
     if cursor.fetchone()[0] == 0:
         default_cookie = {
@@ -75,18 +98,19 @@ def init_db():
             'key': 'setup_key_v2_999',
             'name': 'bionexus_auth_v2_999'
         }
-        cursor.execute("INSERT INTO config (key, value) VALUES (?, ?)", 
-                       ("cookie", json.dumps(default_cookie)))
+        cursor.execute(
+            "INSERT INTO config (key, value) VALUES (%s, %s)",
+            ("cookie", json.dumps(default_cookie))
+        )
 
-    # Default admin user if missing
+    # Default admin user
     cursor.execute("SELECT COUNT(*) FROM users WHERE username = 'admin'")
     if cursor.fetchone()[0] == 0:
-        # Generate a fresh hash for 'admin123'
         admin_hash = bcrypt.hashpw("admin123".encode(), bcrypt.gensalt()).decode()
         cursor.execute('''
-            INSERT OR IGNORE INTO users 
-            (username, email, name, password, role, roles, approved)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO users (username, email, name, password, role, roles, approved)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (username) DO NOTHING
         ''', (
             "admin",
             "admin@example.com",
@@ -94,25 +118,32 @@ def init_db():
             admin_hash,
             "admin",
             json.dumps(["admin", "user"]),
-            1
+            True
         ))
 
     conn.commit()
+    cursor.close()
     conn.close()
+
 
 def save_config(cookie_config):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)", 
-                   ("cookie", json.dumps(cookie_config)))
+    cursor.execute(
+        "INSERT INTO config (key, value) VALUES (%s, %s) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value",
+        ("cookie", json.dumps(cookie_config))
+    )
     conn.commit()
+    cursor.close()
     conn.close()
 
+
 def get_config():
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT value FROM config WHERE key = ?", ("cookie",))
+    cursor.execute("SELECT value FROM config WHERE key = %s", ("cookie",))
     row = cursor.fetchone()
+    cursor.close()
     conn.close()
     if row:
         return json.loads(row[0])
@@ -122,124 +153,147 @@ def get_config():
         'name': 'bioreactor_dashboard'
     }
 
+
 def add_user(username, email, password, name=None, role='user', roles=None, approved=False):
     if roles is None:
         roles = [role]
-    
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     cursor = conn.cursor()
     cursor.execute('''
-    INSERT OR REPLACE INTO users (username, email, name, password, role, roles, approved)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', (username, email, name, password, role, json.dumps(roles), 1 if approved else 0))
+    INSERT INTO users (username, email, name, password, role, roles, approved)
+    VALUES (%s, %s, %s, %s, %s, %s, %s)
+    ON CONFLICT (username) DO UPDATE SET
+        email    = EXCLUDED.email,
+        name     = EXCLUDED.name,
+        password = EXCLUDED.password,
+        role     = EXCLUDED.role,
+        roles    = EXCLUDED.roles,
+        approved = EXCLUDED.approved
+    ''', (username, email, name, password, role, json.dumps(roles), approved))
     conn.commit()
+    cursor.close()
     conn.close()
+
 
 def update_user_approval(username, approved):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("UPDATE users SET approved = ? WHERE username = ?", (1 if approved else 0, username))
+    cursor.execute("UPDATE users SET approved = %s WHERE username = %s", (approved, username))
     conn.commit()
+    cursor.close()
     conn.close()
 
+
 def get_authenticator_config():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    
-    # Load cookie config
-    cursor.execute("SELECT value FROM config WHERE key = ?", ("cookie",))
+    conn = get_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+    # Cookie config
+    cursor.execute("SELECT value FROM config WHERE key = %s", ("cookie",))
     cookie_row = cursor.fetchone()
     cookie = json.loads(cookie_row['value']) if cookie_row else {}
 
-    # Load users
+    # Users
     cursor.execute("SELECT * FROM users")
     rows = cursor.fetchall()
-    
+    cursor.close()
+    conn.close()
+
     usernames = {}
     for row in rows:
-        user_data: dict[str, Any] = dict(row)
-        # Parse logic for roles/role
+        user_data = dict(row)
         user_data['roles'] = json.loads(user_data['roles']) if user_data['roles'] else []
         user_data['approved'] = bool(user_data['approved'])
         user_data['logged_in'] = bool(user_data['logged_in'])
         usernames[user_data['username']] = user_data
-    
-    # Fail-safe: Ensure admin exists in the returned config
+
+    # Fail-safe admin
     if 'admin' not in usernames:
         usernames['admin'] = {
             'username': 'admin',
             'email': 'admin@example.com',
             'name': 'System Admin',
-            'password': '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGGa31S.',
+            'password': bcrypt.hashpw("admin123".encode(), bcrypt.gensalt()).decode(),
             'roles': ['admin', 'user'],
             'role': 'admin',
             'approved': True,
             'logged_in': False
         }
-    
-    # Force new cookie to reset sessions
+
+    # Force fresh cookie
     cookie['name'] = 'bn_auth_v3_77'
     cookie['key'] = 'bn_key_v3_77'
-    
-    conn.close()
-    
+
     return {
         'credentials': {'usernames': usernames},
         'cookie': cookie,
         'pre-authorized': {'emails': []}
     }
 
+
 def list_users():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
+    conn = get_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
     cursor.execute("SELECT username, email, name, role, approved FROM users")
     users = [dict(row) for row in cursor.fetchall()]
+    cursor.close()
     conn.close()
     return users
 
+
 def delete_user(username):
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM users WHERE username = ?", (username,))
+    cursor.execute("DELETE FROM predictions WHERE username = %s", (username,))
+    cursor.execute("DELETE FROM alerts WHERE username = %s", (username,))
+    cursor.execute("DELETE FROM users WHERE username = %s", (username,))
     conn.commit()
+    cursor.close()
     conn.close()
+
 
 def update_user_role(username, role):
     roles = [role]
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("UPDATE users SET role = ?, roles = ? WHERE username = ?", (role, json.dumps(roles), username))
+    cursor.execute(
+        "UPDATE users SET role = %s, roles = %s WHERE username = %s",
+        (role, json.dumps(roles), username)
+    )
     conn.commit()
+    cursor.close()
     conn.close()
 
+
 def save_prediction(username: str, inputs: Dict[str, Any], results: Dict[str, Any], model_name: str = "Bioreactor_v1"):
-    """Save a prediction result to the database."""
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     cursor = conn.cursor()
     cursor.execute('''
         INSERT INTO predictions (username, inputs, results, model_name, timestamp)
-        VALUES (?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s)
     ''', (
-        username, 
-        json.dumps(inputs), 
-        json.dumps(results), 
+        username,
+        json.dumps(inputs),
+        json.dumps(results),
         model_name,
         datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     ))
     conn.commit()
+    cursor.close()
     conn.close()
 
+
 def get_user_history(username: str) -> List[Dict[str, Any]]:
-    """Retrieve prediction history for a specific user."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute('SELECT id, timestamp, inputs, results, model_name FROM predictions WHERE username = ? ORDER BY timestamp DESC', (username,))
+    conn = get_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cursor.execute(
+        'SELECT id, timestamp, inputs, results, model_name FROM predictions WHERE username = %s ORDER BY timestamp DESC',
+        (username,)
+    )
     rows = cursor.fetchall()
+    cursor.close()
     conn.close()
-    
+
     history = []
     for row in rows:
         history.append({
@@ -251,30 +305,33 @@ def get_user_history(username: str) -> List[Dict[str, Any]]:
         })
     return history
 
+
 def delete_history_item(prediction_id: int, username: str):
-    """Delete a specific history item if it belongs to the user."""
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute('DELETE FROM predictions WHERE id = ? AND username = ?', (prediction_id, username))
+    cursor.execute('DELETE FROM predictions WHERE id = %s AND username = %s', (prediction_id, username))
     conn.commit()
+    cursor.close()
     conn.close()
 
-# --- Email Alert Functions ---
+
+# ─────────────────────────────────────────────
+# Alert functions
+# ─────────────────────────────────────────────
 
 def get_alert_config(username: str) -> Dict[str, Any]:
-    """Retrieve alert configuration for a specific user."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    cursor.execute('SELECT * FROM alerts WHERE username = ?', (username,))
+    conn = get_connection()
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cursor.execute('SELECT * FROM alerts WHERE username = %s', (username,))
     row = cursor.fetchone()
+    cursor.close()
     conn.close()
-    
+
     if row:
         return dict(row)
     return {
         "username": username,
-        "email_enabled": 0,
+        "email_enabled": False,
         "target_email": "",
         "titer_threshold": 5.0,
         "condition": "above",
@@ -284,18 +341,27 @@ def get_alert_config(username: str) -> Dict[str, Any]:
         "smtp_pass": ""
     }
 
+
 def save_alert_config(username: str, config: Dict[str, Any]):
-    """Save or update alert configuration for a user."""
-    conn = sqlite3.connect(DB_PATH)
+    conn = get_connection()
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT OR REPLACE INTO alerts (
-            username, email_enabled, target_email, titer_threshold, condition, 
+        INSERT INTO alerts (
+            username, email_enabled, target_email, titer_threshold, condition,
             smtp_server, smtp_port, smtp_user, smtp_pass
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ON CONFLICT (username) DO UPDATE SET
+            email_enabled   = EXCLUDED.email_enabled,
+            target_email    = EXCLUDED.target_email,
+            titer_threshold = EXCLUDED.titer_threshold,
+            condition       = EXCLUDED.condition,
+            smtp_server     = EXCLUDED.smtp_server,
+            smtp_port       = EXCLUDED.smtp_port,
+            smtp_user       = EXCLUDED.smtp_user,
+            smtp_pass       = EXCLUDED.smtp_pass
     ''', (
         username,
-        1 if config.get('email_enabled') else 0,
+        bool(config.get('email_enabled')),
         config.get('target_email'),
         config.get('titer_threshold'),
         config.get('condition'),
@@ -305,10 +371,11 @@ def save_alert_config(username: str, config: Dict[str, Any]):
         config.get('smtp_pass')
     ))
     conn.commit()
+    cursor.close()
     conn.close()
 
+
 def send_email_alert(recipient: str, subject: str, body: str, smtp_config: Dict[str, Any]) -> bool:
-    """Send an email alert using SMTP."""
     try:
         msg = MIMEMultipart()
         msg['From'] = smtp_config.get('smtp_user')

@@ -3,9 +3,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 .env
-venv/
+.venv
 ENV/
 .venv/
+
+# Secrets
+.streamlit/secrets.toml
 
 # Databases
 *.db

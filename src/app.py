@@ -351,6 +351,7 @@ if not st.session_state.get("authentication_status"):
     """, unsafe_allow_html=True)
 
 st.sidebar.header("🔐 Authentication")
+st.sidebar.caption("Deployment Version: 3.77-DEBUG")
 try:
     authenticator.login(location='sidebar')
 except Exception as e:

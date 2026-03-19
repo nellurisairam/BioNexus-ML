@@ -70,8 +70,8 @@ def init_db():
     if cursor.fetchone()[0] == 0:
         default_cookie = {
             'expiry_days': 30,
-            'key': 'some_very_secret_key_123',
-            'name': 'bionexus_cookie'
+            'key': 'setup_key_v2_999',
+            'name': 'bionexus_auth_v2_999'
         }
         cursor.execute("INSERT INTO config (key, value) VALUES (?, ?)", 
                        ("cookie", json.dumps(default_cookie)))
@@ -167,15 +167,15 @@ def get_authenticator_config():
             'logged_in': False
         }
     
+    # Force new cookie to reset sessions
+    cookie['name'] = 'bn_auth_v3_77'
+    cookie['key'] = 'bn_key_v3_77'
+    
     conn.close()
     
     return {
         'credentials': {'usernames': usernames},
-        'cookie': cookie if cookie else {
-            'expiry_days': 30,
-            'key': 'some_very_secret_key_123',
-            'name': 'bionexus_cookie'
-        },
+        'cookie': cookie,
         'preauthorized': {'emails': []}
     }
 

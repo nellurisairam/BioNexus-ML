@@ -296,7 +296,7 @@ if 'admin' not in config['credentials']['usernames']:
         'username': 'admin',
         'email': 'admin@example.com',
         'name': 'System Admin',
-        'password': '$2b$12$TRtouVHjBrfeC72JUq.TauKlkNTByD4ZqfQ8bddHwkioFnIJwvwS6',
+        'password': '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGGa31S.',
         'roles': ['admin', 'user'],
         'role': 'admin',
         'approved': True,
@@ -424,14 +424,16 @@ if st.session_state.get("authentication_status"):
                         
                         # Card-like layout for each user
                         st.markdown(f"**{u_name}** {'(You)' if is_self else ''}")
-                        st.caption(f"{u_data['email']} | {u_data['role'].upper()}")
+                        current_role = u_data.get('role') or 'user'
+                        st.caption(f"{u_data.get('email', 'N/A')} | {current_role.upper()}")
                         
                         # Use columns for Role and Access toggle only
                         c1, c2 = st.columns([1, 1])
                         with c1:
+                            role_val = u_data.get('role') or 'user'
                             new_role = st.selectbox(
                                 "Role", options=["user", "admin"], 
-                                index=0 if u_data['role'] == "user" else 1,
+                                index=0 if role_val == "user" else 1,
                                 key=f"role_{u_name}", disabled=is_self,
                                 label_visibility="collapsed"
                             )

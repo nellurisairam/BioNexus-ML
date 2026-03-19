@@ -80,8 +80,8 @@ def init_db():
     # Default admin user if missing
     cursor.execute("SELECT COUNT(*) FROM users WHERE username = 'admin'")
     if cursor.fetchone()[0] == 0:
-        # Standard bcrypt hash for 'admin123'
-        admin_hash = "$2y$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGGa31S."
+        # Hashed password for 'admin123' (Standard $2b$ format)
+        admin_hash = "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGGa31S."
         cursor.execute('''
             INSERT OR REPLACE INTO users (username, email, name, password, role, roles, approved)
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -161,7 +161,7 @@ def get_authenticator_config():
             'username': 'admin',
             'email': 'admin@example.com',
             'name': 'System Admin',
-            'password': '$2b$12$TRtouVHjBrfeC72JUq.TauKlkNTByD4ZqfQ8bddHwkioFnIJwvwS6',
+            'password': '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGGa31S.',
             'roles': ['admin', 'user'],
             'role': 'admin',
             'approved': True,

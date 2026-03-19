@@ -39,6 +39,7 @@ def get_connection():
 # ─────────────────────────────────────────────
 def init_db():
     conn = get_connection()
+    conn.autocommit = True  # Needed for DDL (CREATE TABLE) in Postgres
     cursor = conn.cursor()
 
     # Users table
@@ -91,6 +92,9 @@ def init_db():
         FOREIGN KEY (username) REFERENCES users (username)
     )
     ''')
+
+    # Turn off autocommit for DML (INSERT, UPDATE etc.)
+    conn.autocommit = False
 
     # Default cookie config
     cursor.execute("SELECT COUNT(*) FROM config WHERE key = 'cookie'")

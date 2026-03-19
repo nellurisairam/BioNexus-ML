@@ -472,11 +472,12 @@ elif st.session_state.get("authentication_status") is None:
     # Add registration widget
     try:
         # Use fresh config for registration to avoid stale state
-        email_of_registered_user, username_of_registered_user, name_of_registered_user = authenticator.register_user(
-            roles=['user'],
-            merge_username_email=False,
-            key='register_user_widget'
-        )
+        with st.sidebar:
+            email_of_registered_user, username_of_registered_user, name_of_registered_user = authenticator.register_user(
+                roles=['user'],
+                merge_username_email=False,
+                key='register_user_widget'
+            )
         if email_of_registered_user:
             # We must reload and save immediately
             st.sidebar.success('User registered successfully! Awaiting admin approval.')

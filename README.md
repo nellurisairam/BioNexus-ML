@@ -13,7 +13,63 @@
 
 ---
 
-## 🚀 Key Features
+## 🗺️ End-to-End Architecture Flowchart
+
+```mermaid
+flowchart TD
+    A([👤 User / Admin]) --> B[Open App URL\nStreamlit Cloud / localhost]
+    B --> C{Authenticated?}
+
+    C -- No --> D[Login Form\nSidebar]
+    D -- Invalid --> D
+    D -- Valid --> E[Check Approval Status\nNeon Postgres]
+    E -- Pending --> F[⏳ Awaiting Admin Approval]
+    E -- Approved --> G[🏠 Dashboard Loaded]
+
+    C -- No --> H[Register New Account\nSidebar Form]
+    H --> I[Save to Neon Postgres\napproved = false]
+    I --> F
+
+    G --> J{User Role?}
+
+    J -- Admin --> K[🔑 Admin Console\nSidebar]
+    K --> K1[Approve / Revoke Users]
+    K --> K2[Change Roles]
+    K --> K3[Delete Users]
+
+    J -- All Users --> L[Dashboard Tabs]
+
+    L --> T1[🚀 Predict & Benchmark\nUpload CSV → ML Pipeline\n→ Titer Prediction + Metrics]
+    L --> T2[🏋️ Train Model\nUpload Training CSV\n→ Fit Random Forest]
+    L --> T3[📊 Data Exploration\nCorrelation Heatmap\nTime-Series / Distributions]
+    L --> T4[📜 Prediction History\nView & Delete Past Sessions]
+    L --> T5[📘 Interpretation Guide\nProcess Parameter Reference]
+    L --> T6[🔔 Alerts\nConfigure Email SMTP\nThreshold Triggers]
+
+    T1 --> DB[(🗄️ Neon Postgres\ncloud persistent)]
+    T4 --> DB
+    T6 --> DB
+    K1 --> DB
+    K2 --> DB
+    K3 --> DB
+
+    subgraph Deployment
+        SC[☁️ Streamlit Cloud\nauto-deploy on git push]
+        GCR[🐳 Google Cloud Run\nDockerfile + GitHub Actions]
+        DB
+    end
+
+    subgraph ML Pipeline
+        M1[Pre-trained .joblib Model]
+        M2[Feature Engineering\nGlucose Rate, DO Change,\nSpecific Productivity, Flags]
+        M3[Prediction Output\nProduct Titer g/L]
+        M2 --> M1 --> M3
+    end
+
+    T1 --> M2
+```
+
+---
 
 | Feature | Details |
 |:---|:---|

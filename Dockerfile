@@ -29,4 +29,4 @@ ENV STREAMLIT_SERVER_PORT=8080
 ENV STREAMLIT_SERVER_ADDRESS=0.0.0.0
 
 # Run the application
-ENTRYPOINT ["streamlit", "run", "src/app.py"]
+ENTRYPOINT ["streamlit", "run", "app_streamlit.py", "--server.port=8080", "--server.address=0.0.0.0"]

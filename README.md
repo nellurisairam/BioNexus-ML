@@ -1,4 +1,4 @@
-# 🔬 BioNexus ML: Bioprocess Intelligence Dashboard
+# BioNexus ML: Bioprocess Intelligence Platform
 
 <div align="center">
 
@@ -7,13 +7,13 @@
 ![PostgreSQL](https://img.shields.io/badge/Neon-Postgres-green?logo=postgresql&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
-**BioNexus ML** is a professional-grade Streamlit dashboard for predicting and benchmarking bioreactor performance using Machine Learning. It features enterprise-grade authentication, real-time data visualization, cloud-persistent data, and a full administrative console — deployed on Streamlit Cloud with Neon Postgres as the backend database.
+**BioNexus ML** is a professional-grade Streamlit application designed for predicting and benchmarking bioreactor performance utilizing Machine Learning. The platform features robust authentication workflows, real-time data visualization, cloud-persistent data storage, and a comprehensive administrative management console.
 
 </div>
 
 ---
 
-## 🗺️ End-to-End Architecture Flowchart
+## End-to-End Architecture
 
 ```mermaid
 flowchart TD
@@ -25,256 +25,241 @@ flowchart TD
     classDef action fill:#ab47bc,stroke:#333,stroke-width:2px,color:#fff
     classDef page fill:#455a64,stroke:#333,stroke-width:2px,color:#fff
 
-    A([👤 User on Streamlit Cloud]):::user --> B{Authenticated?}:::auth
+    A([User / Administrator]):::user --> B{Authenticated?}:::auth
 
-    subgraph Auth ["🔒 Authentication Flow"]
+    subgraph Auth ["Authentication Flow"]
         B -- "No" --> C[Login Form]:::auth
-        C -- "Invalid" --> C
+        C -- "Invalid Credentials" --> C
         
-        B -- "No" --> D[Register Form]:::auth
-        D -- "Submit" --> E[Save: approved=false]:::db
-        E --> F[⏳ Pending Approval]:::page
+        B -- "No" --> D[Registration Form]:::auth
+        D -- "Submit" --> E[Database Registration]:::db
+        E --> F[Pending Administrative Review]:::page
         
-        C -- "Valid" --> G{Check Approval}:::db
+        C -- "Valid" --> G{Access Verification}:::db
         G -- "Pending" --> F
-        G -- "Approved" --> H[🏠 Dashboard Loaded]:::page
+        G -- "Approved" --> H[Dashboard Initialized]:::page
     end
 
-    H --> I{User Role?}:::auth
+    H --> I{Authorization Level?}:::auth
 
-    subgraph Admin ["🔑 Admin Console"]
-        I -- "Admin" --> J[User Management]:::page
+    subgraph Admin ["Administrative Console"]
+        I -- "Administrator" --> J[User Management Interface]:::page
         J --> K[Approve/Revoke Access]:::action
-        J --> L[Change Roles]:::action
-        J --> M[Delete Users]:::action
+        J --> L[Modify User Permissions]:::action
+        J --> M[Remove Accounts]:::action
     end
 
-    subgraph App ["📊 Core Dashboard"]
-        I -- "User/Admin" --> N[Predict & Benchmark]:::page
-        I -- "User/Admin" --> O[Train ML Model]:::page
-        I -- "User/Admin" --> P[Data Exploration]:::page
-        I -- "User/Admin" --> Q[Prediction History]:::page
-        I -- "User/Admin" --> R[Configure Alerts]:::page
+    subgraph App ["Core Dashboard Application"]
+        I -- "User/Administrator" --> N[Predictive Analytics]:::page
+        I -- "User/Administrator" --> O[Model Training Module]:::page
+        I -- "User/Administrator" --> P[Data Visualization]:::page
+        I -- "User/Administrator" --> Q[Session History]:::page
+        I -- "User/Administrator" --> R[System Alerts]:::page
     end
 
-    subgraph ML ["🧠 ML Pipeline"]
-        N -- "Upload CSV" --> S[Feature Engineering]:::action
-        S --> T[Random Forest Model]:::action
-        T --> U[Predict Product Titer]:::action
+    subgraph ML ["Machine Learning Pipeline"]
+        N -- "Dataset Upload" --> S[Feature Engineering]:::action
+        S --> T[Random Forest Assessor]:::action
+        T --> U[Product Titer Calculation]:::action
     end
 
-    DB[(🗄️ Neon Postgres\nCloud Database)]:::db
+    DB[(Neon PostgreSQL\nCloud Database)]:::db
 
-    %% Database Data Flow
-    K -.->|Update| DB
-    L -.->|Update| DB
-    M -.->|Delete| DB
-    U -.->|Save History| DB
-    Q <.->|Read/Delete| DB
-    R -.->|Save Config| DB
+    %% Data Flow Dependencies
+    K -.->|Access Mutator| DB
+    L -.->|Permission Mutator| DB
+    M -.->|Account Purge| DB
+    U -.->|Telemetry Record| DB
+    Q <.->|History Query/Delete| DB
+    R -.->|Configuration Update| DB
 ```
 
 ---
 
-| Feature | Details |
+## Core Capabilities
+
+| Capability | Description |
 |:---|:---|
-| **ML Prediction** | Upload CSV data and get instant `Product_Titer_gL` predictions from trained scikit-learn pipelines |
-| **Model Benchmarking** | Compare live data against the model to compute R², MAE, RMSE |
-| **Model Training** | Train a new Random Forest model directly from the UI |
-| **Data Exploration** | Correlation heatmaps, time-series trends, distribution plots, and summary statistics |
-| **Prediction History** | View and delete past prediction sessions per user |
-| **Interpretation Guide** | Built-in documentation for understanding process parameters and model outputs |
-| **Dynamic Alerts** | Configure email alerts (SMTP) triggered when `Product_Titer_gL` crosses a threshold |
-| **Session Recording** | Built-in screen recorder that downloads a `.webm` video of your analysis session |
-| **Enterprise Auth** | Login, Registration, Admin Approval via `streamlit-authenticator` v0.4.2 |
-| **Persistent Database** | All users, predictions, and alert configs stored in **Neon Postgres** (persists across redeploys) |
-| **Responsive Design** | Glassmorphism & neon UI, fully responsive for mobile, tablet, and desktop |
-| **Theme Toggle** | Light and Dark mode switcher in the sidebar |
+| **Predictive Analytics** | Process uploaded datasets to generate real-time `Product_Titer_gL` estimations utilizing serialized scikit-learn models. |
+| **Model Benchmarking** | Quantify predictive accuracy against live process data via statistical metrics (R², MAE, RMSE). |
+| **In-Application Training** | Facilitate the training and optimization of Random Forest Regressor models directly from the user interface. |
+| **Data Visualization** | Render complex multivariate relationships via correlation matrices, time-series analysis, and kernel density estimations. |
+| **Audit Logging** | Maintain and provide user-specific access to historical prediction telemetry and model interactions. |
+| **Documentation** | Integrated reference manual detailing critical process parameters and predictive confidence intervals. |
+| **Event Thresholding** | Configure automated SMTP-based notifications triggered by predefined biometric threshold deviations. |
+| **Session Documentation** | Native screen recording functionality to archive exploratory data analysis sessions. |
+| **Security & Access** | Role-Based Access Control (RBAC), secure registration, and administrative verification managed via `streamlit-authenticator` v0.4.2. |
+| **Cloud Persistence** | Centralized, durable storage for user credentials, operational telemetry, and configuration preferences using Neon PostgreSQL. |
 
 ---
 
-## 🛠️ Tech Stack
+## Technology Stack
 
-| Layer | Technology | Version |
+| Component | Technology | Version |
 |:---|:---|:---|
-| **Frontend** | Streamlit | 1.55.0 |
+| **Frontend Framework** | Streamlit | 1.55.0 |
 | **Machine Learning** | Scikit-Learn | 1.7.2 |
-| **Data Processing** | Pandas, NumPy | 2.3.3 / 2.2.6 |
-| **Visualization** | Matplotlib, Seaborn | 3.10.6 / 0.13.2 |
-| **Model Serialization** | Joblib | 1.5.2 |
-| **Authentication** | streamlit-authenticator | 0.4.2 |
-| **Password Hashing** | bcrypt | 5.0.0 |
-| **Database** | Neon Postgres (cloud) via psycopg2 | 2.9.10 |
-| **Env Management** | python-dotenv | 1.2.2 |
-| **Deployment** | Streamlit Cloud | — |
-| **Styling** | Custom CSS — Glassmorphism & Neon Aesthetics | — |
+| **Data Aggregation** | Pandas, NumPy | 2.3.3 / 2.2.6 |
+| **Graphical Rendering** | Matplotlib, Seaborn | 3.10.6 / 0.13.2 |
+| **Binary Serialization** | Joblib | 1.5.2 |
+| **Authentication Module** | streamlit-authenticator | 0.4.2 |
+| **Cryptographic Hashing** | bcrypt | 5.0.0 |
+| **Database Engine** | Neon PostgreSQL via psycopg2 | 2.9.10 |
+| **Environment Configuration** | python-dotenv | 1.2.2 |
+| **Application Hosting** | Streamlit Cloud | — |
 
 ---
 
-## 📂 Project Structure
+## Project Architecture
 
 ```text
 BioNexus-ML/
-├── assets/                  # Background image and branding assets
-├── data/                    # Sample CSV datasets for testing and prediction
-├── models/                  # Pre-trained model artifacts (.joblib, .json schema)
-├── notebooks/               # Jupyter notebooks for data exploration & model training
+├── assets/                  # Graphical assets and branding collateral
+├── data/                    # Benchmark datasets for validation
+├── models/                  # Serialized ML pipelines (.joblib) and schema definitions (.json)
+├── notebooks/               # Experimental Jupyter environments
 ├── .streamlit/
-│   └── secrets.toml         # 🔒 Local secrets (NOT committed to Git)
-├── app_streamlit.py          # Main Streamlit application (all UI and logic)
-├── database_utils.py         # Neon Postgres connection & all DB operations
-├── requirements.txt          # Python dependencies
-├── start_app.bat             # Windows batch file for local launch
-├── .env                      # 🔒 Local env vars (NOT committed to Git)
-├── .gitignore                # Excludes .env, *.db, secrets.toml, __pycache__
-└── README.md                 # Project documentation
+│   └── secrets.toml         # Environment credentials (excluded from version control)
+├── app_streamlit.py          # Primary application entry point
+├── database_utils.py         # PostgreSQL connection protocols and database operations
+├── requirements.txt          # Defined Python dependencies
+├── start_app.bat             # Windows execution script
+├── .env                      # Local environment variables (excluded from version control)
+├── .gitignore                # Version control exclusions
+└── README.md                 # System documentation
 ```
 
 ---
 
-## 📊 Dashboard Tabs
+## Application Workspaces
 
-### 🚀 Tab 1 — Predict & Benchmark
-- Upload a CSV file with bioreactor run data.
-- The app automatically preprocesses the data (derived features, normalization, flags).
-- Generates predictions for `Product_Titer_gL` using the loaded ML pipeline.
-- Displays benchmark metrics: **R²**, **MAE**, **RMSE**, **Max Error**.
-- Shows a **Feature Importance** chart for tree-based models.
-- Saves each prediction session to the database (Neon Postgres).
+### 1. Predict & Benchmark
+- Ingest bioreactor run data via CSV upload.
+- Execute automated data preprocessing and feature engineering (e.g., consumption rate derivation, variance normalization).
+- Compute outcome estimations for `Product_Titer_gL` via the active predictive pipeline.
+- Render statistical accuracy visualizations encompassing R², MAE, RMSE, and associated Feature Importance graphs.
 
-### 🏋️ Tab 2 — Train Model
-- Upload a labeled training CSV directly from the UI.
-- Trains a **Random Forest Regressor** pipeline with automatic feature engineering.
-- Evaluates the model and shows training stats.
-- Saves the new model artifact to the `models/` directory.
+### 2. Train Model
+- Upload verified historical datasets for localized model training.
+- Automatically construct and evaluate a Random Forest Regressor algorithm.
+- Provide post-training statistical performance summaries.
+- Serialize the derived model for subsequent application use.
 
-### 📊 Tab 3 — Data Exploration
-- Upload or use sample data to explore your dataset.
-- Summary statistics (min, max, mean, std) per column.
-- **Correlation Heatmap** (Seaborn, annotated).
-- **Time-Series Trends** — multi-parameter line chart over `Time_hours`.
-- **Distribution Plots** — histogram + KDE and box plot per feature.
-- Metric summary cards: Avg Temperature, pH, Dissolved Oxygen, Product Titer.
+### 3. Data Exploration
+- Perform descriptive statistical analysis across all process parameters.
+- Visualize parameter correlation via annotated heatmaps.
+- Track longitudinal process variations utilizing multi-axis time-series plotting.
+- Examine continuous data distribution via histogram and generic box plots.
 
-### 📜 Tab 4 — History
-- Lists all prediction sessions made by the logged-in user.
-- Shows timestamp, model used, and key inputs.
-- Option to delete individual history entries.
+### 4. Prediction History
+- Display a chronological audit trail of all predictive computations executed by the authenticated user.
+- Detail the associated predictive model and core input parameters per session.
+- Manage compliance by allowing session deletion.
 
-### 📘 Tab 5 — Interpretation Guide
-- Built-in reference guide explaining:
-  - What each input parameter means (Temperature, pH, DO%, RPM, etc.)
-  - How to interpret model outputs (Titer prediction range, confidence).
-  - Best practices for bioreactor process interpretation.
+### 5. Interpretation Guide
+- Access the platform's standard operating procedure (SOP) documentation.
+- Review operational definitions for critical identifiers (Temperature, pH, DO%, Agitation).
+- Understand the confidence boundaries associated with the active predictive models.
 
-### 🔔 Tab 6 — Alerts
-- Configure email notifications when `Product_Titer_gL` crosses a set threshold.
-- Supports **above** or **below** conditions.
-- SMTP configuration (works with Gmail, Outlook, etc.).
-- Settings saved per user in Neon Postgres.
+### 6. System Alerts
+- Establish rule-based conditionals for asynchronous status updates via email.
+- Set thresholds (`above`/`below`) tied to primary metrics globally.
+- Persist notification profiles directly to the remote PostgreSQL instance.
 
 ---
 
-## 👤 User Roles & Admin Console
+## Administrative Operations
 
-| Role | Capabilities |
-|:---|:---|
-| **User** | Predictions, benchmarking, training, data exploration, history, alerts, screen recording |
-| **Admin** | All user capabilities + Admin Management Console |
+The platform enforces Role-Based Access Control distinguishing standard Users from Administrators.
 
-### 🔑 Admin Management Console (Sidebar)
-- **Pending Approvals**: See and approve new user registrations.
-- **User Management**: View all users with email and role, change roles (user/admin), approve/revoke access, delete users.
+### Administrative Console
+Administrators possess exclusive access to the sidebar management interface, facilitating:
+- **Pending Approvals**: Reviewing and authorizing newly registered accounts.
+- **Access Control**: Promoting user permissions to administrative levels or revoking access entirely.
+- **Account Deletion**: Managing identity lifecycles globally.
 
-> **Default Admin Credentials:**
+> **Note on Initial Deployment:**
+> The default administrative account is provisioned as follows:
 > - Username: `admin`
 > - Password: `admin123`
 >
-> ⚠️ Change the admin password immediately after first login in production!
+> Ensure these credentials are updated immediately upon deploying to a production environment.
 
 ---
 
-## ⚙️ Setup & Installation
+## System Initialization & Deployment
 
 ### Prerequisites
-- Python 3.10+
-- A [Neon](https://neon.tech) Postgres database (free tier is sufficient)
+- Python 3.10 or higher
+- An active Neon PostgreSQL database instance
 
-### Local Development
+### Local Environment Setup
 
-1. **Clone the repository**:
+1. **Repository Access**:
    ```bash
    git clone https://github.com/nellurisairam/BioNexus-ML.git
    cd BioNexus-ML
    ```
 
-2. **Create and activate a virtual environment**:
+2. **Environment Isolation**:
    ```bash
    python -m venv .venv
    .venv\Scripts\activate      # Windows
    source .venv/bin/activate   # macOS/Linux
    ```
 
-3. **Install dependencies**:
+3. **Dependency Resolution**:
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Create a `.env` file** in the root with your Neon connection string:
+4. **Configuration Mapping**:
+   Create a `.env` file in the project root containing the respective Data Source Name (DSN) string:
    ```env
    NEON_DATABASE_URL=postgresql://user:password@host/neondb?sslmode=require
    ```
 
-5. **Run the Dashboard**:
+5. **Application Execution**:
    ```bash
    streamlit run app_streamlit.py
    ```
-   Or on Windows, double-click `start_app.bat`.
+   (Alternatively via Windows: execute `start_app.bat`.)
 
 ---
 
-## ☁️ Cloud Deployment
+### Streamlit Cloud Deployment
 
-### Streamlit Cloud
-
-1. Push your code to the `main` branch on GitHub.
-2. Go to [share.streamlit.io](https://share.streamlit.io) and connect your repo.
-3. Set the **main file path** to `app_streamlit.py`.
-4. Set the **Python version** to `3.10` in the app settings.
-5. Go to **Settings → Secrets** and add:
+1. Push the committed repository to the `main` branch.
+2. Link the repository via the Streamlit Cloud administrative portal.
+3. Configure the **Application Entrypoint** to `app_streamlit.py`.
+4. Ensure the Python runtime environment is set to `3.10`.
+5. Under **Advanced Settings → Secrets**, inject the database environment variable:
    ```toml
    NEON_DATABASE_URL = "postgresql://user:password@host/neondb?sslmode=require"
    ```
-246: 6. Streamlit Cloud auto-redeploys on every push to `main`.
-247: 
-248: ---
-
-## 🔒 Security Notes
-
-- **Secrets**: The `.env` and `.streamlit/secrets.toml` files are excluded from Git via `.gitignore`.
-- **Password Hashing**: All passwords are hashed using `bcrypt` with a unique salt per user.
-- **Admin Approval**: New registrations require admin approval before they can access the dashboard.
-- **Session Cookies**: Authentication cookies are managed securely by `streamlit-authenticator`.
+6. The platform will automatically trigger a redeployment upon subsequent commits to `main`.
 
 ---
 
-## 🗄️ Database Schema (Neon Postgres)
+## Data Architecture
 
-| Table | Description |
+| Persistent Table | Functional Description |
 |:---|:---|
-| `users` | Stores username, hashed password, email, role, approval status |
-| `config` | Stores cookie configuration |
-| `predictions` | Stores per-user prediction history (inputs, results, timestamp) |
-| `alerts` | Stores per-user email alert configuration |
+| `users` | Maintains identity profiles inclusive of hashed credentials and RBAC assignments |
+| `config` | Provisions persistent application-wide configuration arrays (e.g., cookie parameters) |
+| `predictions` | Logs transactional histories regarding user-driven model estimations |
+| `alerts` | Stores threshold configurations and target delivery definitions for asynchronous alerts |
 
 ---
 
-## 📄 License
+## Security Directives
 
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+- **Credential Exclusions**: Configuration files detailing database Uniform Resource Identifiers (URIs) are excluded from version control parsing.
+- **Cryptographic Standards**: Authentication passwords are mathematically hashed locally using `bcrypt` implementation combined with dynamic salting prior to database transmission.
+- **Session Management**: JWT or cookie-based state persistence is secured entirely through the validated methods provided by `streamlit-authenticator`.
 
 ---
 
-<div align="center">
-Built with ❤️ for Bioprocess Engineers
-</div>
+## License
+
+This architecture is released and distributed under the MIT License — refer to the `LICENSE` document for legal delineations.

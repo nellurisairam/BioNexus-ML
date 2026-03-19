@@ -16,22 +16,27 @@ from dotenv import load_dotenv
 load_dotenv()  # loads .env file for local development
 
 # ─────────────────────────────────────────────
-# Connection helper
+# Connection helper (cached for performance)
 # ─────────────────────────────────────────────
-def get_connection():
-    """Return a psycopg2 connection to Neon Postgres."""
-    # Try Streamlit secrets first (cloud deployment)
+@st.cache_resource
+def _get_conn_str() -> str:
+    """Read the connection string once and cache it."""
     try:
-        conn_str = st.secrets["NEON_DATABASE_URL"]
+        return st.secrets["NEON_DATABASE_URL"]
     except Exception:
-        # Fall back to environment variable (local dev)
         conn_str = os.environ.get("NEON_DATABASE_URL", "")
-
     if not conn_str:
         raise RuntimeError(
             "NEON_DATABASE_URL not set. Add it to Streamlit Secrets or your .env file."
         )
-    return psycopg2.connect(conn_str)
+    return conn_str
+
+
+def get_connection():
+    """Return a psycopg2 connection, reconnecting if the cached one dropped."""
+    conn_str = _get_conn_str()
+    conn = psycopg2.connect(conn_str)
+    return conn
 
 
 # ─────────────────────────────────────────────

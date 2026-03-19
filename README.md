@@ -53,9 +53,8 @@ flowchart TD
     K2 --> DB
     K3 --> DB
 
-    subgraph Deployment
-        SC[☁️ Streamlit Cloud\nauto-deploy on git push]
-        GCR[🐳 Google Cloud Run\nDockerfile + GitHub Actions]
+    subgraph Deployment["☁️ Deployment"]
+        SC[Streamlit Cloud\nauto-deploy on git push to main]
         DB
     end
 
@@ -101,7 +100,7 @@ flowchart TD
 | **Password Hashing** | bcrypt | 5.0.0 |
 | **Database** | Neon Postgres (cloud) via psycopg2 | 2.9.10 |
 | **Env Management** | python-dotenv | 1.2.2 |
-| **Deployment** | Streamlit Cloud + Google Cloud Run (Docker) | — |
+| **Deployment** | Streamlit Cloud | — |
 | **Styling** | Custom CSS — Glassmorphism & Neon Aesthetics | — |
 
 ---
@@ -114,14 +113,10 @@ BioNexus-ML/
 ├── data/                    # Sample CSV datasets for testing and prediction
 ├── models/                  # Pre-trained model artifacts (.joblib, .json schema)
 ├── notebooks/               # Jupyter notebooks for data exploration & model training
-├── .github/
-│   └── workflows/
-│       └── deploy.yml       # GitHub Actions CI/CD → Google Cloud Run
 ├── .streamlit/
 │   └── secrets.toml         # 🔒 Local secrets (NOT committed to Git)
 ├── app_streamlit.py          # Main Streamlit application (all UI and logic)
 ├── database_utils.py         # Neon Postgres connection & all DB operations
-├── Dockerfile                # Container image for Google Cloud Run
 ├── requirements.txt          # Python dependencies
 ├── start_app.bat             # Windows batch file for local launch
 ├── .env                      # 🔒 Local env vars (NOT committed to Git)
@@ -244,24 +239,9 @@ BioNexus-ML/
    ```toml
    NEON_DATABASE_URL = "postgresql://user:password@host/neondb?sslmode=require"
    ```
-6. Streamlit Cloud auto-redeploys on every push to `main`.
-
-### Google Cloud Run (via Docker + GitHub Actions)
-
-Automated CI/CD is configured with GitHub Actions (`.github/workflows/deploy.yml`).
-
-**Required GitHub Secrets:**
-| Secret | Description |
-|:---|:---|
-| `GCP_PROJECT_ID` | Your Google Cloud project ID |
-| `GCP_SA_KEY` | Base64-encoded service account JSON key |
-
-On every push to `main`, GitHub Actions will:
-1. Build the Docker image.
-2. Push it to Google Container Registry.
-3. Deploy to Google Cloud Run.
-
----
+246: 6. Streamlit Cloud auto-redeploys on every push to `main`.
+247: 
+248: ---
 
 ## 🔒 Security Notes
 

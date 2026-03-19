@@ -25,55 +25,53 @@ flowchart TD
     classDef action fill:#ab47bc,stroke:#333,stroke-width:2px,color:#fff
     classDef page fill:#455a64,stroke:#333,stroke-width:2px,color:#fff
 
-    A([👤 User / Admin]):::user --> B[Open App URL\nStreamlit Cloud / localhost]:::cloud
-    B --> C{Authenticated?}:::auth
+    A([👤 User on Streamlit Cloud]):::user --> B{Authenticated?}:::auth
 
-    C -- No --> D[Login Form\nSidebar]:::auth
-    D -- Invalid --> D
-    D -- Valid --> E[Check Approval Status\nNeon Postgres]:::db
-    E -- Pending --> F[⏳ Awaiting Admin Approval]:::auth
-    E -- Approved --> G[🏠 Dashboard Loaded]:::page
-
-    C -- No --> H[Register New Account\nSidebar Form]:::auth
-    H --> I[Save to Neon Postgres\napproved = false]:::db
-    I --> F
-
-    G --> J{User Role?}:::auth
-
-    J -- Admin --> K[🔑 Admin Console\nSidebar]:::page
-    K --> K1[Approve / Revoke Users]:::action
-    K --> K2[Change Roles]:::action
-    K --> K3[Delete Users]:::action
-
-    J -- All Users --> L[Dashboard Tabs]:::page
-
-    L --> T1[🚀 Predict & Benchmark\nUpload CSV → ML Pipeline\n→ Titer Prediction + Metrics]:::page
-    L --> T2[🏋️ Train Model\nUpload Training CSV\n→ Fit Random Forest]:::page
-    L --> T3[📊 Data Exploration\nCorrelation Heatmap\nTime-Series / Distributions]:::page
-    L --> T4[📜 Prediction History\nView & Delete Past Sessions]:::page
-    L --> T5[📘 Interpretation Guide\nProcess Parameter Reference]:::page
-    L --> T6[🔔 Alerts\nConfigure Email SMTP\nThreshold Triggers]:::page
-
-    T1 --> DB[(🗄️ Neon Postgres\ncloud persistent)]:::db
-    T4 --> DB
-    T6 --> DB
-    K1 --> DB
-    K2 --> DB
-    K3 --> DB
-
-    subgraph Deployment["☁️ Deployment"]
-        SC[Streamlit Cloud\nauto-deploy on git push to main]:::cloud
-        DB
+    subgraph Auth ["🔒 Authentication Flow"]
+        B -- "No" --> C[Login Form]:::auth
+        C -- "Invalid" --> C
+        
+        B -- "No" --> D[Register Form]:::auth
+        D -- "Submit" --> E[Save: approved=false]:::db
+        E --> F[⏳ Pending Approval]:::page
+        
+        C -- "Valid" --> G{Check Approval}:::db
+        G -- "Pending" --> F
+        G -- "Approved" --> H[🏠 Dashboard Loaded]:::page
     end
 
-    subgraph ML Pipeline
-        M1[Pre-trained .joblib Model]:::action
-        M2[Feature Engineering\nGlucose Rate, DO Change,\nSpecific Productivity, Flags]:::action
-        M3[Prediction Output\nProduct Titer g/L]:::action
-        M2 --> M1 --> M3
+    H --> I{User Role?}:::auth
+
+    subgraph Admin ["🔑 Admin Console"]
+        I -- "Admin" --> J[User Management]:::page
+        J --> K[Approve/Revoke Access]:::action
+        J --> L[Change Roles]:::action
+        J --> M[Delete Users]:::action
     end
 
-    T1 --> M2
+    subgraph App ["📊 Core Dashboard"]
+        I -- "User/Admin" --> N[Predict & Benchmark]:::page
+        I -- "User/Admin" --> O[Train ML Model]:::page
+        I -- "User/Admin" --> P[Data Exploration]:::page
+        I -- "User/Admin" --> Q[Prediction History]:::page
+        I -- "User/Admin" --> R[Configure Alerts]:::page
+    end
+
+    subgraph ML ["🧠 ML Pipeline"]
+        N -- "Upload CSV" --> S[Feature Engineering]:::action
+        S --> T[Random Forest Model]:::action
+        T --> U[Predict Product Titer]:::action
+    end
+
+    DB[(🗄️ Neon Postgres\nCloud Database)]:::db
+
+    %% Database Data Flow
+    K -.->|Update| DB
+    L -.->|Update| DB
+    M -.->|Delete| DB
+    U -.->|Save History| DB
+    Q <.->|Read/Delete| DB
+    R -.->|Save Config| DB
 ```
 
 ---

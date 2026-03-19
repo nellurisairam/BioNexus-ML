@@ -12,6 +12,8 @@ from email.mime.multipart import MIMEMultipart
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import streamlit as st
+from dotenv import load_dotenv
+load_dotenv()  # loads .env file for local development
 
 # ─────────────────────────────────────────────
 # Connection helper

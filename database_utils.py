@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Any
 
 import smtplib
+import bcrypt
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
@@ -80,12 +81,21 @@ def init_db():
     # Default admin user if missing
     cursor.execute("SELECT COUNT(*) FROM users WHERE username = 'admin'")
     if cursor.fetchone()[0] == 0:
-        # Hashed password for 'admin123' (Standard $2b$ format)
-        admin_hash = "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGGa31S."
+        # Generate a fresh hash for 'admin123'
+        admin_hash = bcrypt.hashpw("admin123".encode(), bcrypt.gensalt()).decode()
         cursor.execute('''
-            INSERT OR REPLACE INTO users (username, email, name, password, role, roles, approved)
+            INSERT OR IGNORE INTO users 
+            (username, email, name, password, role, roles, approved)
             VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', ("admin", "admin@example.com", "System Admin", admin_hash, "admin", json.dumps(["admin", "user"]), 1))
+        ''', (
+            "admin",
+            "admin@example.com",
+            "System Admin",
+            admin_hash,
+            "admin",
+            json.dumps(["admin", "user"]),
+            1
+        ))
 
     conn.commit()
     conn.close()

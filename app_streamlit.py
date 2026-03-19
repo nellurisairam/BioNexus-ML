@@ -31,6 +31,7 @@ from database_utils import (
     get_alert_config, save_alert_config, send_email_alert
 )
 from threading import Thread
+import bcrypt
 
 # 1.0 ROOT DIR SETUP
 ROOT_DIR = Path(__file__).parent
@@ -296,7 +297,7 @@ if 'admin' not in config['credentials']['usernames']:
         'username': 'admin',
         'email': 'admin@example.com',
         'name': 'System Admin',
-        'password': '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGGa31S.',
+        'password': bcrypt.hashpw("admin123".encode(), bcrypt.gensalt()).decode(),
         'roles': ['admin', 'user'],
         'role': 'admin',
         'approved': True,

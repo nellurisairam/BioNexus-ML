@@ -304,10 +304,10 @@ if 'admin' not in config['credentials']['usernames']:
     }
 
 authenticator = stauth.Authenticate(
-    config['credentials'],
-    config['cookie']['name'],
-    config['cookie']['key'],
-    config['cookie']['expiry_days']
+    credentials=config['credentials'],
+    cookie_name=config['cookie']['name'],
+    key=config['cookie']['key'],
+    cookie_expiry_days=config['cookie']['expiry_days']
 )
 
 # --- BRANDING ON LOGIN PAGE ---
@@ -367,7 +367,7 @@ try:
                     st.session_state["name"] = "System Admin"
                     st.rerun()
 
-    authenticator.login(location='sidebar')
+    authenticator.login(location='sidebar', key='login_sidebar')
 except Exception as e:
     st.error(e)
 
@@ -378,10 +378,10 @@ if st.session_state.get("authentication_status"):
     if user_info:
         if not user_info.get("approved"):
             st.warning("Awaiting admin approval.")
-            authenticator.logout(location='sidebar')
+            authenticator.logout(button_name='Logout', location='sidebar', key='logout_approval')
             st.stop()
             
-        authenticator.logout(location='sidebar')
+        authenticator.logout(button_name='Logout', location='sidebar', key='logout_main')
 
         # --- Dashboard Content Starts Here ---
         # Protected Dashboard Logic
@@ -473,9 +473,9 @@ elif st.session_state.get("authentication_status") is None:
     try:
         # Use fresh config for registration to avoid stale state
         email_of_registered_user, username_of_registered_user, name_of_registered_user = authenticator.register_user(
-            location='sidebar',
             roles=['user'],
-            merge_username_email=False
+            merge_username_email=False,
+            key='register_user_widget'
         )
         if email_of_registered_user:
             # We must reload and save immediately

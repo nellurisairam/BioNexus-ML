@@ -177,7 +177,7 @@ def get_authenticator_config():
     return {
         'credentials': {'usernames': usernames},
         'cookie': cookie,
-        'preauthorized': {'emails': []}
+        'pre-authorized': {'emails': []}
     }
 
 def list_users():

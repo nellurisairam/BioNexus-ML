@@ -1,0 +1,16 @@
+.git
+.gitignore
+.venv
+__pycache__
+notebooks
+docs
+scripts
+*.db
+*.sqlite3
+.DS_Store
+Dockerfile
+.dockerignore
+README.md
+task.md
+implementation_plan.md
+walkthrough.md

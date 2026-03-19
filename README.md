@@ -17,61 +17,65 @@
 
 ```mermaid
 flowchart TD
-    %% Styling
-    classDef user fill:#ff9900,stroke:#333,stroke-width:2px,color:#fff
-    classDef auth fill:#e91e63,stroke:#333,stroke-width:2px,color:#fff
-    classDef db fill:#00c853,stroke:#333,stroke-width:2px,color:#fff
-    classDef cloud fill:#29b6f6,stroke:#333,stroke-width:2px,color:#000
-    classDef action fill:#ab47bc,stroke:#333,stroke-width:2px,color:#fff
-    classDef page fill:#455a64,stroke:#333,stroke-width:2px,color:#fff
+    %% Enterprise Architecture Styling
+    classDef actor fill:#ffffff,stroke:#333333,stroke-width:2px,color:#333333
+    classDef subsystem fill:#f8f9fa,stroke:#ced4da,stroke-width:2px,color:#212529
+    classDef component fill:#e9ecef,stroke:#adb5bd,stroke-width:1px,color:#495057
+    classDef database fill:#ffffff,stroke:#0056b3,stroke-width:2px,color:#0056b3,shape:cylinder
+    classDef external fill:#e3f2fd,stroke:#1976d2,stroke-width:1px,color:#0d47a1
 
-    A([User / Administrator]):::user --> B{Authenticated?}:::auth
+    %% Actors
+    Actor[User / Administrator]:::actor
 
-    subgraph Auth ["Authentication Flow"]
-        B -- "No" --> C[Login Form]:::auth
-        C -- "Invalid Credentials" --> C
+    subgraph PresentationLayer ["Presentation Layer (Streamlit Cloud)"]
+        direction TB
+        AuthGate[Identity & Authentication Gateway]:::component
+        AdminGUI[Administrative Interface]:::component
+        DashGUI[Core Analytical Dashboard]:::component
+    end
+
+    subgraph BusinessLogicLayer ["Business Logic & Application Layer"]
+        direction TB
+        AuthMgr[Access Control Manager]:::subsystem
+        UserMgr[Identity Lifecycle Service]:::subsystem
         
-        B -- "No" --> D[Registration Form]:::auth
-        D -- "Submit" --> E[Database Registration]:::db
-        E --> F[Pending Administrative Review]:::page
-        
-        C -- "Valid" --> G{Access Verification}:::db
-        G -- "Pending" --> F
-        G -- "Approved" --> H[Dashboard Initialized]:::page
+        PredictEngine[Predictive Analytics Engine]:::subsystem
+        DataViz[Data Visualization Service]:::subsystem
+        AlertService[SMTP Notification Service]:::subsystem
     end
 
-    H --> I{Authorization Level?}:::auth
-
-    subgraph Admin ["Administrative Console"]
-        I -- "Administrator" --> J[User Management Interface]:::page
-        J --> K[Approve/Revoke Access]:::action
-        J --> L[Modify User Permissions]:::action
-        J --> M[Remove Accounts]:::action
+    subgraph MLEngine ["Machine Learning Integration"]
+        direction TB
+        Prep[Data Preprocessing & Encoding]:::component
+        Model[Serialized Model Artifacts .joblib]:::component
     end
 
-    subgraph App ["Core Dashboard Application"]
-        I -- "User/Administrator" --> N[Predictive Analytics]:::page
-        I -- "User/Administrator" --> O[Model Training Module]:::page
-        I -- "User/Administrator" --> P[Data Visualization]:::page
-        I -- "User/Administrator" --> Q[Session History]:::page
-        I -- "User/Administrator" --> R[System Alerts]:::page
-    end
+    %% Data Layer
+    DB[(Neon PostgreSQL Cloud Instance)]:::database
+    SMTP[External SMTP Provider]:::external
 
-    subgraph ML ["Machine Learning Pipeline"]
-        N -- "Dataset Upload" --> S[Feature Engineering]:::action
-        S --> T[Random Forest Assessor]:::action
-        T --> U[Product Titer Calculation]:::action
-    end
+    %% Flow Dynamics
+    Actor -->|HTTPS| AuthGate
+    AuthGate -->|Token Validation| AuthMgr
+    AuthMgr -->|Query Metadata| DB
+    
+    AuthGate -->|Authorized (Admin)| AdminGUI
+    AuthGate -->|Authorized (User)| DashGUI
 
-    DB[(Neon PostgreSQL\nCloud Database)]:::db
+    AdminGUI -->|Role Mutations| UserMgr
+    UserMgr -.->|Write Auth Data| DB
 
-    %% Data Flow Dependencies
-    K -.->|Access Mutator| DB
-    L -.->|Permission Mutator| DB
-    M -.->|Account Purge| DB
-    U -.->|Telemetry Record| DB
-    Q <.->|History Query/Delete| DB
-    R -.->|Configuration Update| DB
+    DashGUI -->|Telemetry Upload| PredictEngine
+    DashGUI -->|Query Formats| DataViz
+    DashGUI -->|Config Updates| AlertService
+
+    PredictEngine -->|Matrix Transformation| Prep
+    Prep -->|Batch Inference| Model
+    Model -->|Titer Estimates| PredictEngine
+    PredictEngine -.->|Audit Log Record| DB
+
+    AlertService -.->|Trigger Evaluation| DB
+    AlertService -->|Email Dispatch| SMTP
 ```
 
 ---

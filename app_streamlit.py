@@ -281,6 +281,63 @@ def set_design(theme="Light", is_authenticated=False):
     .user-card button {{
         margin-top: 5px !important;
     }}
+
+    /* ── Responsive: Tablet (max 1024px) ── */
+    @media (max-width: 1024px) {{
+        .block-container {{
+            padding-left: 1.5rem !important;
+            padding-right: 1.5rem !important;
+        }}
+        h1 {{ font-size: 1.8rem !important; }}
+        h2 {{ font-size: 1.4rem !important; }}
+    }}
+
+    /* ── Responsive: Mobile (max 768px) ── */
+    @media (max-width: 768px) {{
+        .block-container {{
+            padding-left: 0.75rem !important;
+            padding-right: 0.75rem !important;
+            padding-top: 1rem !important;
+        }}
+        /* Stack metrics vertically */
+        div[data-testid="stMetric"] {{
+            min-width: 100% !important;
+        }}
+        /* Make tabs horizontally scrollable instead of wrapping */
+        .stTabs [data-baseweb="tab-list"] {{
+            overflow-x: auto !important;
+            flex-wrap: nowrap !important;
+            gap: 6px !important;
+        }}
+        .stTabs [data-baseweb="tab"] {{
+            min-width: fit-content !important;
+            padding: 0 12px !important;
+            height: 40px !important;
+            font-size: 0.8rem !important;
+        }}
+        /* Login branding scaling */
+        h1 {{ font-size: 2.5rem !important; }}
+        h2 {{ font-size: 1.2rem !important; }}
+        /* Forms full-width */
+        [data-testid="stForm"] {{
+            padding: 16px !important;
+        }}
+        /* Expanded sidebar doesn't overlap content */
+        .stButton > button {{
+            padding: 8px 14px !important;
+            font-size: 0.85rem !important;
+        }}
+    }}
+
+    /* ── Responsive: Small Mobile (max 480px) ── */
+    @media (max-width: 480px) {{
+        .block-container {{
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+        }}
+        h1 {{ font-size: 2rem !important; }}
+        div[data-testid="stMetricValue"] {{ font-size: 1.4rem !important; }}
+    }}
     </style>
     """, unsafe_allow_html=True)
 

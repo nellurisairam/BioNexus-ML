@@ -1,47 +1,147 @@
-# BioNexus ML: Bioprocess Intelligence Dashboard
+# 🔬 BioNexus ML: Bioprocess Intelligence Dashboard
 
-BioNexus ML is a professional-grade Streamlit dashboard for predicting and benchmarking bioreactor performance using Machine Learning. It features enterprise-grade authentication, real-time visualization, and a persistent cloud database.
+<div align="center">
+
+![Python](https://img.shields.io/badge/Python-3.10-blue?logo=python&logoColor=white)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.55-red?logo=streamlit&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/Neon-Postgres-green?logo=postgresql&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-yellow)
+
+**BioNexus ML** is a professional-grade Streamlit dashboard for predicting and benchmarking bioreactor performance using Machine Learning. It features enterprise-grade authentication, real-time data visualization, cloud-persistent data, and a full administrative console — deployed on Streamlit Cloud with Neon Postgres as the backend database.
+
+</div>
+
+---
 
 ## 🚀 Key Features
 
-- **ML Prediction**: Load pre-trained scikit-learn pipelines to predict `Product_Titer_gL` from bioprocess parameters.
-- **Benchmarking**: Compare live data against models to calculate R², MAE, and RMSE.
-- **Enterprise Security**: Login, registration, and admin approval workflows via `streamlit-authenticator` v0.4.2.
-- **Persistent Cloud DB**: All users, predictions, and alert configs stored in **Neon Postgres** (no data loss on redeployment).
-- **Dynamic Alerts**: Configurable email alerts for threshold-based process monitoring.
-- **Session Recording**: Integrated screen recorder for documenting analysis sessions.
-- **Data Exploration**: Correlation heatmaps, time-series trends, and distribution plots.
+| Feature | Details |
+|:---|:---|
+| **ML Prediction** | Upload CSV data and get instant `Product_Titer_gL` predictions from trained scikit-learn pipelines |
+| **Model Benchmarking** | Compare live data against the model to compute R², MAE, RMSE |
+| **Model Training** | Train a new Random Forest model directly from the UI |
+| **Data Exploration** | Correlation heatmaps, time-series trends, distribution plots, and summary statistics |
+| **Prediction History** | View and delete past prediction sessions per user |
+| **Interpretation Guide** | Built-in documentation for understanding process parameters and model outputs |
+| **Dynamic Alerts** | Configure email alerts (SMTP) triggered when `Product_Titer_gL` crosses a threshold |
+| **Session Recording** | Built-in screen recorder that downloads a `.webm` video of your analysis session |
+| **Enterprise Auth** | Login, Registration, Admin Approval via `streamlit-authenticator` v0.4.2 |
+| **Persistent Database** | All users, predictions, and alert configs stored in **Neon Postgres** (persists across redeploys) |
+| **Responsive Design** | Glassmorphism & neon UI, fully responsive for mobile, tablet, and desktop |
+| **Theme Toggle** | Light and Dark mode switcher in the sidebar |
+
+---
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|:---|:---|
-| **Frontend** | Streamlit 1.55 |
-| **ML** | Scikit-Learn, Pandas, NumPy, Joblib |
-| **Visualization** | Matplotlib, Seaborn |
-| **Authentication** | streamlit-authenticator 0.4.2, bcrypt |
-| **Database** | Neon Postgres (cloud, persistent) via psycopg2 |
-| **Deployment** | Streamlit Cloud + Google Cloud Run (Docker) |
-| **Styling** | Custom CSS — Glassmorphism & Neon Aesthetics |
+| Layer | Technology | Version |
+|:---|:---|:---|
+| **Frontend** | Streamlit | 1.55.0 |
+| **Machine Learning** | Scikit-Learn | 1.7.2 |
+| **Data Processing** | Pandas, NumPy | 2.3.3 / 2.2.6 |
+| **Visualization** | Matplotlib, Seaborn | 3.10.6 / 0.13.2 |
+| **Model Serialization** | Joblib | 1.5.2 |
+| **Authentication** | streamlit-authenticator | 0.4.2 |
+| **Password Hashing** | bcrypt | 5.0.0 |
+| **Database** | Neon Postgres (cloud) via psycopg2 | 2.9.10 |
+| **Env Management** | python-dotenv | 1.2.2 |
+| **Deployment** | Streamlit Cloud + Google Cloud Run (Docker) | — |
+| **Styling** | Custom CSS — Glassmorphism & Neon Aesthetics | — |
+
+---
 
 ## 📂 Project Structure
 
 ```text
 BioNexus-ML/
-├── assets/              # Images and branding assets
-├── data/                # Sample datasets for testing and prediction
-├── models/              # Pre-trained model artifacts (.joblib, .json)
-├── notebooks/           # Data exploration and model training workflows
-├── .streamlit/          # Streamlit configuration (secrets not committed)
-├── .github/workflows/   # GitHub Actions CI/CD for Google Cloud Run
-├── app_streamlit.py     # Main Streamlit dashboard
-├── database_utils.py    # Neon Postgres connection and all DB helpers
-├── Dockerfile           # Container image for Google Cloud Run
-├── requirements.txt     # Python dependencies
-└── README.md            # Project documentation
+├── assets/                  # Background image and branding assets
+├── data/                    # Sample CSV datasets for testing and prediction
+├── models/                  # Pre-trained model artifacts (.joblib, .json schema)
+├── notebooks/               # Jupyter notebooks for data exploration & model training
+├── .github/
+│   └── workflows/
+│       └── deploy.yml       # GitHub Actions CI/CD → Google Cloud Run
+├── .streamlit/
+│   └── secrets.toml         # 🔒 Local secrets (NOT committed to Git)
+├── app_streamlit.py          # Main Streamlit application (all UI and logic)
+├── database_utils.py         # Neon Postgres connection & all DB operations
+├── Dockerfile                # Container image for Google Cloud Run
+├── requirements.txt          # Python dependencies
+├── start_app.bat             # Windows batch file for local launch
+├── .env                      # 🔒 Local env vars (NOT committed to Git)
+├── .gitignore                # Excludes .env, *.db, secrets.toml, __pycache__
+└── README.md                 # Project documentation
 ```
 
+---
+
+## 📊 Dashboard Tabs
+
+### 🚀 Tab 1 — Predict & Benchmark
+- Upload a CSV file with bioreactor run data.
+- The app automatically preprocesses the data (derived features, normalization, flags).
+- Generates predictions for `Product_Titer_gL` using the loaded ML pipeline.
+- Displays benchmark metrics: **R²**, **MAE**, **RMSE**, **Max Error**.
+- Shows a **Feature Importance** chart for tree-based models.
+- Saves each prediction session to the database (Neon Postgres).
+
+### 🏋️ Tab 2 — Train Model
+- Upload a labeled training CSV directly from the UI.
+- Trains a **Random Forest Regressor** pipeline with automatic feature engineering.
+- Evaluates the model and shows training stats.
+- Saves the new model artifact to the `models/` directory.
+
+### 📊 Tab 3 — Data Exploration
+- Upload or use sample data to explore your dataset.
+- Summary statistics (min, max, mean, std) per column.
+- **Correlation Heatmap** (Seaborn, annotated).
+- **Time-Series Trends** — multi-parameter line chart over `Time_hours`.
+- **Distribution Plots** — histogram + KDE and box plot per feature.
+- Metric summary cards: Avg Temperature, pH, Dissolved Oxygen, Product Titer.
+
+### 📜 Tab 4 — History
+- Lists all prediction sessions made by the logged-in user.
+- Shows timestamp, model used, and key inputs.
+- Option to delete individual history entries.
+
+### 📘 Tab 5 — Interpretation Guide
+- Built-in reference guide explaining:
+  - What each input parameter means (Temperature, pH, DO%, RPM, etc.)
+  - How to interpret model outputs (Titer prediction range, confidence).
+  - Best practices for bioreactor process interpretation.
+
+### 🔔 Tab 6 — Alerts
+- Configure email notifications when `Product_Titer_gL` crosses a set threshold.
+- Supports **above** or **below** conditions.
+- SMTP configuration (works with Gmail, Outlook, etc.).
+- Settings saved per user in Neon Postgres.
+
+---
+
+## 👤 User Roles & Admin Console
+
+| Role | Capabilities |
+|:---|:---|
+| **User** | Predictions, benchmarking, training, data exploration, history, alerts, screen recording |
+| **Admin** | All user capabilities + Admin Management Console |
+
+### 🔑 Admin Management Console (Sidebar)
+- **Pending Approvals**: See and approve new user registrations.
+- **User Management**: View all users with email and role, change roles (user/admin), approve/revoke access, delete users.
+
+> **Default Admin Credentials:**
+> - Username: `admin`
+> - Password: `admin123`
+>
+> ⚠️ Change the admin password immediately after first login in production!
+
+---
+
 ## ⚙️ Setup & Installation
+
+### Prerequisites
+- Python 3.10+
+- A [Neon](https://neon.tech) Postgres database (free tier is sufficient)
 
 ### Local Development
 
@@ -51,47 +151,88 @@ BioNexus-ML/
    cd BioNexus-ML
    ```
 
-2. **Install dependencies**:
+2. **Create and activate a virtual environment**:
+   ```bash
+   python -m venv .venv
+   .venv\Scripts\activate      # Windows
+   source .venv/bin/activate   # macOS/Linux
+   ```
+
+3. **Install dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
 
-3. **Create a `.env` file** in the root with your Neon connection string:
-   ```
+4. **Create a `.env` file** in the root with your Neon connection string:
+   ```env
    NEON_DATABASE_URL=postgresql://user:password@host/neondb?sslmode=require
    ```
 
-4. **Run the Dashboard**:
+5. **Run the Dashboard**:
    ```bash
    streamlit run app_streamlit.py
    ```
+   Or on Windows, double-click `start_app.bat`.
 
-### Streamlit Cloud Deployment
+---
 
-1. Push code to the `main` branch on GitHub.
-2. In the Streamlit Cloud dashboard go to **Settings → Secrets** and add:
+## ☁️ Cloud Deployment
+
+### Streamlit Cloud
+
+1. Push your code to the `main` branch on GitHub.
+2. Go to [share.streamlit.io](https://share.streamlit.io) and connect your repo.
+3. Set the **main file path** to `app_streamlit.py`.
+4. Set the **Python version** to `3.10` in the app settings.
+5. Go to **Settings → Secrets** and add:
    ```toml
    NEON_DATABASE_URL = "postgresql://user:password@host/neondb?sslmode=require"
    ```
-3. Streamlit Cloud will auto-deploy on every push to `main`.
+6. Streamlit Cloud auto-redeploys on every push to `main`.
 
-### Google Cloud Run Deployment
+### Google Cloud Run (via Docker + GitHub Actions)
 
-Automated via GitHub Actions on every push. Requires the following GitHub Secrets:
-- `GCP_PROJECT_ID`
-- `GCP_SA_KEY`
+Automated CI/CD is configured with GitHub Actions (`.github/workflows/deploy.yml`).
 
-## 👤 User Roles
-
-| Role | Permissions |
+**Required GitHub Secrets:**
+| Secret | Description |
 |:---|:---|
-| **User** | Predictions, data exploration, history, alerts |
-| **Admin** | All user permissions + user management console (approve, revoke, delete, change roles) |
+| `GCP_PROJECT_ID` | Your Google Cloud project ID |
+| `GCP_SA_KEY` | Base64-encoded service account JSON key |
 
-Default admin credentials: **username:** `admin` / **password:** `admin123`
+On every push to `main`, GitHub Actions will:
+1. Build the Docker image.
+2. Push it to Google Container Registry.
+3. Deploy to Google Cloud Run.
 
-> ⚠️ Change the admin password immediately after first login in production.
+---
+
+## 🔒 Security Notes
+
+- **Secrets**: The `.env` and `.streamlit/secrets.toml` files are excluded from Git via `.gitignore`.
+- **Password Hashing**: All passwords are hashed using `bcrypt` with a unique salt per user.
+- **Admin Approval**: New registrations require admin approval before they can access the dashboard.
+- **Session Cookies**: Authentication cookies are managed securely by `streamlit-authenticator`.
+
+---
+
+## 🗄️ Database Schema (Neon Postgres)
+
+| Table | Description |
+|:---|:---|
+| `users` | Stores username, hashed password, email, role, approval status |
+| `config` | Stores cookie configuration |
+| `predictions` | Stores per-user prediction history (inputs, results, timestamp) |
+| `alerts` | Stores per-user email alert configuration |
+
+---
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
+
+---
+
+<div align="center">
+Built with ❤️ for Bioprocess Engineers
+</div>

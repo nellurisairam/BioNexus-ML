@@ -17,10 +17,10 @@ exit /b
 )
 
 :: Check app file
-if not exist "src\app.py" (
-echo [ERROR] src\app.py not found!
-pause
-exit /b
+if not exist "app_streamlit.py" (
+    echo [ERROR] app_streamlit.py not found!
+    pause
+    exit /b
 )
 
 :: Setup virtual environment
@@ -45,7 +45,7 @@ exit /b
 echo.
 echo [2/2] Launching Streamlit Dashboard...
 start http://localhost:8501
-python -m streamlit run src/app.py
+streamlit run app_streamlit.py
 
 if %errorlevel% neq 0 (
 echo.

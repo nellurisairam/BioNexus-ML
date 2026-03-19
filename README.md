@@ -29,9 +29,8 @@ BioNexus-ML/
 ├── data/               # Sample datasets for testing and prediction
 ├── models/             # Pre-trained model artifacts (.joblib, .json)
 ├── notebooks/          # Data exploration and model training workflows
-├── src/                # Core application source code
-│   ├── app.py          # Main Streamlit dashboard
-│   └── database_utils.py # Database and authentication helpers
+├── app_streamlit.py    # Main Streamlit dashboard
+├── database_utils.py  # Database and authentication helpers
 ├── requirements.txt    # Project dependencies
 └── README.md           # Project documentation
 ```
@@ -51,7 +50,7 @@ BioNexus-ML/
 
 3. **Run the Dashboard**:
    ```bash
-   streamlit run src/app.py
+   streamlit run app_streamlit.py
    ```
 
 ## 👤 User Roles

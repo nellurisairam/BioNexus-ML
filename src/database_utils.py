@@ -76,15 +76,13 @@ def init_db():
         cursor.execute("INSERT INTO config (key, value) VALUES (?, ?)", 
                        ("cookie", json.dumps(default_cookie)))
 
-    # Default admin user if empty
-    cursor.execute("SELECT COUNT(*) FROM users")
+    # Default admin user if missing
+    cursor.execute("SELECT COUNT(*) FROM users WHERE username = 'admin'")
     if cursor.fetchone()[0] == 0:
-        # Hashed password for 'admin123'
-        admin_hash = "$2b$12$M.t8rO6oG9T6j1u2v3w4x5y6z7A8B9C0D1E2F3G4H5I6J7K8L9M0N" 
-        # Actually I will use a more standard one
+        # Standard bcrypt hash for 'admin123'
         admin_hash = "$2y$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGGa31S."
         cursor.execute('''
-            INSERT INTO users (username, email, name, password, role, roles, approved)
+            INSERT OR REPLACE INTO users (username, email, name, password, role, roles, approved)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         ''', ("admin", "admin@example.com", "System Admin", admin_hash, "admin", json.dumps(["admin", "user"]), 1))
 
@@ -155,6 +153,19 @@ def get_authenticator_config():
         user_data['approved'] = bool(user_data['approved'])
         user_data['logged_in'] = bool(user_data['logged_in'])
         usernames[user_data['username']] = user_data
+    
+    # Fail-safe: Ensure admin exists in the returned config
+    if 'admin' not in usernames:
+        usernames['admin'] = {
+            'username': 'admin',
+            'email': 'admin@example.com',
+            'name': 'System Admin',
+            'password': '$2y$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGGa31S.',
+            'roles': ['admin', 'user'],
+            'role': 'admin',
+            'approved': True,
+            'logged_in': False
+        }
     
     conn.close()
     

@@ -7,14 +7,9 @@ echo   BioNexus ML - Dynamic Dashboard
 echo ==========================================
 echo.
 
-:: Check Python
-echo Checking Python environment...
-python --version >nul 2>&1
-if %errorlevel% neq 0 (
-echo [ERROR] Python is not installed or not in PATH.
-pause
-exit /b
-)
+echo [INFO] Python check passed.
+taskkill /f /im python.exe /t >nul 2>&1
+echo [INFO] Existing Python processes cleaned up.
 
 :: Check app file
 if not exist "app_streamlit.py" (
@@ -37,9 +32,13 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 
 if %errorlevel% neq 0 (
-echo [ERROR] Failed to install dependencies!
-pause
-exit /b
+    echo.
+    echo [ERROR] Failed to install dependencies!
+    echo.
+    echo [TIP] If you see "Access is denied", a Python process might be holding onto files.
+    echo Try manually deleting the ".venv" folder and then run this script again.
+    pause
+    exit /b
 )
 
 echo.

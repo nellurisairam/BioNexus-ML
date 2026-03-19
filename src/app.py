@@ -287,6 +287,19 @@ set_design(is_authenticated=st.session_state.get("authentication_status", False)
 init_db()
 config = get_authenticator_config()
 
+# Final fail-safe: Ensure admin user is injected into the config if missing
+if 'admin' not in config['credentials']['usernames']:
+    config['credentials']['usernames']['admin'] = {
+        'username': 'admin',
+        'email': 'admin@example.com',
+        'name': 'System Admin',
+        'password': '$2b$12$TRtouVHjBrfeC72JUq.TauKlkNTByD4ZqfQ8bddHwkioFnIJwvwS6',
+        'roles': ['admin', 'user'],
+        'role': 'admin',
+        'approved': True,
+        'logged_in': False
+    }
+
 authenticator = stauth.Authenticate(
     config['credentials'],
     config['cookie']['name'],

@@ -70,8 +70,9 @@ def set_design(theme="Light", is_authenticated=False):
         card_border = "rgba(255, 255, 255, 0.15)"
         sidebar_bg = "rgba(0, 0, 0, 0.4)"
         metric_val = "#00d1ff"
-        input_bg = "rgba(255, 255, 255, 0.1)"
+        input_bg = "rgba(16, 42, 67, 0.95)"
         input_border = card_border
+        base_bg_color = "#0a1929" # Dark background base for overrides
     else:
         bg_overlay = "rgba(240, 244, 248, 0.8)"
         text_color = "#102a43"
@@ -81,6 +82,7 @@ def set_design(theme="Light", is_authenticated=False):
         metric_val = "#004a8c"
         input_bg = "#ffffff"
         input_border = "rgba(16, 42, 67, 0.2)" # Darker border for visibility
+        base_bg_color = "#f0f4f8" # Light background base
 
     # If not authenticated, we MUST ensure text is light as background is dark
     if not is_authenticated:
@@ -88,12 +90,19 @@ def set_design(theme="Light", is_authenticated=False):
         text_color = "#ffffff" # Force white text for visibility
         card_bg = "rgba(255, 255, 255, 0.1)"
         card_border = "rgba(255, 255, 255, 0.2)"
-        input_bg = "rgba(255, 255, 255, 0.1)"
+        input_bg = "rgba(10, 25, 41, 0.95)"
         input_border = "rgba(255, 255, 255, 0.2)"
         sidebar_bg = "rgba(10, 25, 41, 0.8)" # Ensure sidebar is dark enough for white text
+        base_bg_color = "#0a1929"
 
     st.markdown(f"""
     <style>
+    :root {{
+        --text-color: {text_color} !important;
+        --background-color: {base_bg_color} !important;
+        --secondary-background-color: {sidebar_bg} !important;
+        --primary-color: {metric_val} !important;
+    }}
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
     
     html, body, .stApp, .stMarkdown, p, li {{
@@ -191,7 +200,7 @@ def set_design(theme="Light", is_authenticated=False):
     div[data-baseweb="base-input"], div[data-baseweb="input"] {{
         background-color: transparent !important;
     }}
-    .stTextInput input, .stNumberInput input, .stSelectbox [data-baseweb="select"], [data-testid="stSidebar"] input {{
+    .stTextInput input, .stNumberInput input, .stSelectbox [data-baseweb="select"], [data-testid="stSidebar"] input, textarea, select, input {{
         color: {text_color} !important;
         background-color: {input_bg} !important;
         border-radius: 8px !important;
@@ -200,17 +209,25 @@ def set_design(theme="Light", is_authenticated=False):
     }}
 
     /* Specific fix for Dropdown (Selectbox) items and popovers */
-    div[data-baseweb="popover"], div[data-baseweb="menu"], li[role="option"], [data-baseweb="select"] span {{
+    div[data-baseweb="popover"], div[data-baseweb="menu"], ul[role="listbox"], li[role="option"] {{
         background-color: {input_bg} !important;
         color: {text_color} !important;
     }}
-    li[role="option"]:hover {{
-        background-color: {metric_val}33 !important;
+    
+    [data-baseweb="select"] span {{
+        color: {text_color} !important;
     }}
 
-    /* Target specifically the sidebar inputs which are often used for login */
-    [data-testid="stSidebar"] .stTextInput input {{
-        background-color: rgba(255, 255, 255, 0.15) !important;
+    li[role="option"]:hover {{
+        background-color: {metric_val} !important;
+        color: #ffffff !important;
+    }}
+
+    /* Placeholders */
+    ::placeholder {{
+        color: {text_color} !important;
+        opacity: 0.6 !important;
+        -webkit-text-fill-color: {text_color} !important;
     }}
 
     /* Toggle visibility */

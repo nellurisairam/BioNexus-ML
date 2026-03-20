@@ -1181,7 +1181,7 @@ with tab_history:
         item_id_raw = st.selectbox(
             "Select Run ID to Inspect/Delete", 
             options=[str(d['ID']) for d in table_data],
-            format_func=lambda x: f"Run ID: {x} | {id_to_item[x]['timestamp'].split(' ')[0]}" if x in id_to_item else x
+            format_func=lambda x: f"Run ID: {x} | {str(id_to_item[x]['timestamp']).split(' ')[0]}" if x in id_to_item else x
         )
         
         selected_item = id_to_item.get(str(item_id_raw))

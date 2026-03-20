@@ -1174,20 +1174,28 @@ with tab_history:
         
         # Actions
         st.write("#### Detailed Actions")
-        item_id = st.selectbox("Select Run ID to Inspect/Delete", options=[d['ID'] for d in table_data])
         
-        selected_item = next((h for h in history if h['id'] == item_id), None)
+        # Create a rigorous mapping to prevent Streamlit widget state mismatches
+        id_to_item = {str(h['id']): h for h in history}
+        
+        item_id_raw = st.selectbox(
+            "Select Run ID to Inspect/Delete", 
+            options=[str(d['ID']) for d in table_data],
+            format_func=lambda x: f"Run ID: {x} | {id_to_item[x]['timestamp'].split(' ')[0]}" if x in id_to_item else x
+        )
+        
+        selected_item = id_to_item.get(str(item_id_raw))
         
         if selected_item:
-            with st.expander(f"🔍 View Full JSON Profile for Run #{item_id}", expanded=False):
+            with st.expander(f"🔍 View Full JSON Profile for Run #{item_id_raw}", expanded=False):
                 st.json(selected_item)
             
             # Sub-columns to keep the delete button centered/contained
             _, col_del, _ = st.columns([1, 2, 1])
             with col_del:
                 if st.button("🗑️ Delete from History", use_container_width=True, type="primary"):
-                    delete_history_item(item_id, username)
-                    st.toast(f"Deleted run {item_id}")
+                    delete_history_item(int(item_id_raw), username)
+                    st.toast(f"Deleted run {item_id_raw}")
                     st.rerun()
         
         # Download all history

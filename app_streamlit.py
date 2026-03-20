@@ -1204,7 +1204,9 @@ with tab_history:
 with tab_guide:
     st.write("## 📘 Bioprocessor's Analytics Masterclass")
     st.markdown("""
-    Welcome to the deep-dive guide. This section bridges the gap between **Data Science** and **Bioprocess Engineering**, helping you turn graphs into actionable lab decisions.
+    Welcome to the deep-dive guide. This section bridges the gap between **Data Science** and **Bioprocess Engineering**, helping you turn mathematical graphs into actionable lab decisions.
+    
+    Here, we translate machine learning outputs—like R-squared values, Feature Importances, and Boxplots—into operational bio-manufacturing strategies you can use on the floor today.
     """)
     
     # --- Section 1: Accuracy & Trust ---
@@ -1225,6 +1227,7 @@ with tab_guide:
             st.warning("""
             - **Low R² (<0.6)**: Your inputs (Temp, pH, etc.) don't explain the yield enough. Look for unmeasured factors like *Media Lot Variation* or *Inoculum Quality*.
             - **High RMSE**: If your RMSE is 1.0 on a 5.0 yield, that's a 20% error. Do not use this model for critical setpoint changes yet.
+            - **Cross-functional fix**: Tell your data team to add new historian tags (like Off-Gas O2/CO2) to the model training pipeline to capture the missing variance.
             """)
 
     # --- Section 2: Drivers & Inhibitors ---
@@ -1282,7 +1285,28 @@ with tab_guide:
         with col2:
             st.markdown("#### 🛠️ Action Plan")
             st.error("""
-            - **Root Cause Analysis**: Click on an outlier ID in the History tab. See what parameter was unique during that run to prevent future batch losses.
+            - **Root Cause Analysis**: Click on an outlier ID in the History tab. Look at what parameter was unique during that run to prevent future batch losses.
+            - **Process Capability (CpK)**: If your boxplot is very wide, your process is unstable. Focus on raw material standardization and tighter PID tuning before trying to optimize for higher yields.
+            """)
+
+    # --- Section 5: Closing the Loop ---
+    with st.expander("⚙️ 5. Moving to Predictive Control", expanded=False):
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            st.markdown("#### 🔬 The Science")
+            st.write("""
+            Predictive modeling is only useful if it drives action. A highly accurate model allows you to transition from **Reactive** control (fixing a crashed pH) to **Preventative** control (adjusting feed rates *before* the pH crashes based on the model's trajectory prediction).
+            """)
+            st.markdown("#### 📊 How to Read")
+            st.write("""
+            - **The Predict Tab**: Input your current real-time bioreactor parameters here.
+            - **Simulation runs**: Test "What-If" scenarios. (e.g., "If I lower Agitation by 10 RPM to save shear stress, will my Titer drop?").
+            """)
+        with col2:
+            st.markdown("#### 🛠️ Action Plan")
+            st.info("""
+            - **Golden Batch Replication**: Identify the exact parameter profile of your highest historical yield in the History tab. Use the Predict tab to simulate if pushing your current run's parameters towards that "Golden Profile" improves the forecasted yield without violating constraints.
+            - **Data Science Feedback**: If a real run completely misses the model's prediction, document the anomalous event (e.g., "Centrifuge failure delayed harvest") and log this so the ML team can learn from the failure.
             """)
 
     st.markdown("---")

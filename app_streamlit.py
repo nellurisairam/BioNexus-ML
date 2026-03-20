@@ -90,6 +90,7 @@ def set_design(theme="Light", is_authenticated=False):
         card_border = "rgba(255, 255, 255, 0.2)"
         input_bg = "rgba(255, 255, 255, 0.1)"
         input_border = "rgba(255, 255, 255, 0.2)"
+        sidebar_bg = "rgba(10, 25, 41, 0.8)" # Ensure sidebar is dark enough for white text
 
     st.markdown(f"""
     <style>
@@ -187,6 +188,9 @@ def set_design(theme="Light", is_authenticated=False):
     }}
 
     /* Specific Form Input Text Contrast - Ensure inputs are ALWAYS readable */
+    div[data-baseweb="base-input"], div[data-baseweb="input"] {{
+        background-color: transparent !important;
+    }}
     .stTextInput input, .stNumberInput input, .stSelectbox [data-baseweb="select"], [data-testid="stSidebar"] input {{
         color: {text_color} !important;
         background-color: {input_bg} !important;

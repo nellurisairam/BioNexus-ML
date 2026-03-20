@@ -143,6 +143,15 @@ def set_design(theme="Light", is_authenticated=False):
         box-shadow: 0 0 20px {metric_val}22 !important;
     }}
 
+    /* Expander explicit header transparency to kill white backgrounds */
+    .stExpander details, .stExpander summary, [data-testid="stExpander"] details, [data-testid="stExpander"] summary {{
+        background-color: transparent !important;
+    }}
+    .stExpander summary p, .stExpander summary span, .stExpander summary svg {{
+        color: {text_color} !important;
+        fill: {text_color} !important;
+    }}
+
     div[data-testid="stMetricValue"] {{
         font-weight: 700 !important;
         color: {metric_val} !important;
@@ -247,6 +256,16 @@ def set_design(theme="Light", is_authenticated=False):
     
     .stFileUploader label, .stFileUploader section, .stFileUploader section p, .stFileUploader section small {{
         color: {text_color} !important;
+    }}
+
+    /* Tooltips, Glossary Help Text, and Markdown Code elements */
+    .stTooltipContent, div[data-testid="stTooltipContent"], .stHelp, div[data-testid="stHelp"] *, code {{
+        color: {text_color} !important;
+    }}
+    code {{
+        background-color: rgba(0, 0, 0, 0.2) !important;
+        padding: 2px 6px !important;
+        border-radius: 4px !important;
     }}
 
     /* Ensure ALL buttons and their text are always visible with high contrast */

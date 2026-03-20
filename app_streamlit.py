@@ -471,14 +471,23 @@ try:
         st.write(f"Users found: {list(config['credentials']['usernames'].keys())}")
         if st.checkbox("Show Emergency Login"):
             secret = st.text_input("Secret Phrase", type="password")
-            if secret == "bionexus2026":
+            expected_secret = st.secrets.get("EMERGENCY_SECRET", "bionexus2026")
+            if secret == expected_secret:
                 if st.button("🚀 Emergency Admin Entry"):
                     st.session_state["authentication_status"] = True
                     st.session_state["username"] = "admin"
                     st.session_state["name"] = "System Admin"
+                    st.session_state["_is_emergency"] = True
                     st.rerun()
 
-    authenticator.login(location='sidebar', key='login_sidebar')
+    # Clear emergency bypass if user gets logged out
+    if st.session_state.get("authentication_status") is not True:
+        st.session_state["_is_emergency"] = False
+
+    # Skip authenticator if safely in emergency mode
+    if not st.session_state.get("_is_emergency", False):
+        authenticator.login(location='sidebar', key='login_sidebar')
+
 except Exception as e:
     st.error(e)
 

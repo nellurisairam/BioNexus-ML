@@ -1288,9 +1288,9 @@ with tab_guide:
     st.markdown("---")
     st.write("### 📖 Glossary of Metrics")
     c1, c2, c3 = st.columns(3)
-    c1.help("**R-Squared (R²)**: The percentage of yield variation explained by your inputs. 0.8+ is excellent.")
-    c2.help("**MAE**: Mean Absolute Error. The 'Average Miss' in real units (g/L).")
-    c3.help("**RMSE**: Penalizes large errors more heavily than MAE. High RMSE means the model sometimes makes very big mistakes.")
+    c1.info("**R-Squared (R²)**: The percentage of yield variation explained by your inputs. 0.8+ is excellent.")
+    c2.info("**MAE**: Mean Absolute Error. The 'Average Miss' in real units (g/L).")
+    c3.info("**RMSE**: Penalizes large errors more heavily than MAE. High RMSE means the model sometimes makes very big mistakes.")
 
 with tab_alerts:
     st.write("## 🔔 Smart Email Alerts")

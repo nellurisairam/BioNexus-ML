@@ -1176,16 +1176,16 @@ with tab_history:
         st.write("#### Detailed Actions")
         item_id = st.selectbox("Select Run ID to Inspect/Delete", options=[d['ID'] for d in table_data])
         
-        col_view, col_del = st.columns(2)
         selected_item = next((h for h in history if h['id'] == item_id), None)
         
         if selected_item:
-            with col_view:
-                if st.button("🔍 View Details", use_container_width=True):
-                    st.json(selected_item)
+            with st.expander(f"🔍 View Full JSON Profile for Run #{item_id}", expanded=False):
+                st.json(selected_item)
             
+            # Sub-columns to keep the delete button centered/contained
+            _, col_del, _ = st.columns([1, 2, 1])
             with col_del:
-                if st.button("🗑️ Delete from History", use_container_width=True, type="secondary"):
+                if st.button("🗑️ Delete from History", use_container_width=True, type="primary"):
                     delete_history_item(item_id, username)
                     st.toast(f"Deleted run {item_id}")
                     st.rerun()

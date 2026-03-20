@@ -66,7 +66,7 @@ def set_design(theme="Light", is_authenticated=False):
     if theme == "Dark":
         bg_overlay = "rgba(16, 42, 67, 0.85)"
         text_color = "#f0f4f8"
-        card_bg = "rgba(255, 255, 255, 0.1)"
+        card_bg = "rgba(0, 0, 0, 0.25)" # Dark glass for maximum white text contrast
         card_border = "rgba(255, 255, 255, 0.15)"
         sidebar_bg = "rgba(0, 0, 0, 0.4)"
         metric_val = "#00d1ff"

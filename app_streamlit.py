@@ -931,6 +931,8 @@ with tab_predict:
                             violator_count = int(np.sum(preds < threshold))
                         violator_pct = (violator_count / len(preds)) * 100
                         
+                        model_basename = str(model_path).replace('\\', '/').split('/')[-1]
+                        
                         subject = f"🚨 BioNexus Alert: Process Yield Threshold Triggered ({username})"
                         body = (
                             f"Hello {username},\n\n"
@@ -943,7 +945,7 @@ with tab_predict:
                             f"• Time Run: {timestamp_str}\n"
                             f"• Data Source: {src_desc}\n"
                             f"• Batch Size: {len(preds):,} samples\n"
-                            f"• Model Used: {str(model_path).split('/')[-1].split('\\\\')[-1]}\n\n"
+                            f"• Model Used: {model_basename}\n\n"
                             f"=== STATISTICAL SPREAD ===\n"
                             f"• Minimum Yield Predicted: {min_val:.2f} g/L\n"
                             f"• Maximum Yield Predicted: {max_val:.2f} g/L\n"

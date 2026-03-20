@@ -921,11 +921,39 @@ with tab_predict:
                               (condition == 'below' and mean_val < threshold)
                     
                     if trigger:
-                        subject = f"🚨 BiNexus Alert: Prediction Threshold Met ({username})"
-                        body = f"Hello {username},\n\nYour recent batch prediction (mean: {mean_val:.2f} g/L) met the alert condition '{condition} {threshold} g/L'.\n\nModel: {model_path}\nRows: {len(preds)}"
+                        min_val = float(np.min(preds))
+                        max_val = float(np.max(preds))
+                        timestamp_str = pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')
+                        
+                        if condition == 'above':
+                            violator_count = int(np.sum(preds > threshold))
+                        else:
+                            violator_count = int(np.sum(preds < threshold))
+                        violator_pct = (violator_count / len(preds)) * 100
+                        
+                        subject = f"🚨 BioNexus Alert: Process Yield Threshold Triggered ({username})"
+                        body = (
+                            f"Hello {username},\n\n"
+                            f"A recent batch prediction run has triggered your automated alert configuration.\n\n"
+                            f"=== SUMMARY ===\n"
+                            f"• Trigger Rule: Mean Yield {condition.upper()} {threshold} g/L\n"
+                            f"• Actual Mean Yield: {mean_val:.2f} g/L\n"
+                            f"• Outlier Impact: {violator_count:,} out of {len(preds):,} samples ({violator_pct:.1f}%) directly violated the {threshold} g/L threshold.\n\n"
+                            f"=== BATCH DETAILS ===\n"
+                            f"• Time Run: {timestamp_str}\n"
+                            f"• Data Source: {src_desc}\n"
+                            f"• Batch Size: {len(preds):,} samples\n"
+                            f"• Model Used: {str(model_path).split('/')[-1].split('\\\\')[-1]}\n\n"
+                            f"=== STATISTICAL SPREAD ===\n"
+                            f"• Minimum Yield Predicted: {min_val:.2f} g/L\n"
+                            f"• Maximum Yield Predicted: {max_val:.2f} g/L\n"
+                            f"• Average Yield Predicted: {mean_val:.2f} g/L\n\n"
+                            f"Please log in to the BioNexus ML Dashboard and check the History tab to review the exact JSON profiles for this run.\n"
+                            f"Link: http://localhost:8501 (Update if deployed to Cloud)\n"
+                        )
                         # Send in background thread
                         Thread(target=send_email_alert, args=(alert_cfg.get('target_email'), subject, body, alert_cfg)).start()
-                        st.toast("📧 Alert email triggered!")
+                        st.toast("📧 Alert email triggered with detailed stats!")
 
                 st.toast("✅ Batch prediction saved to history")
                 

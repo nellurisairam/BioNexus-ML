@@ -196,16 +196,24 @@ def set_design(theme="Light", is_authenticated=False):
         color: {text_color} !important;
     }}
 
-    /* Specific Form Input Text Contrast - Ensure inputs are ALWAYS readable */
-    div[data-baseweb="base-input"], div[data-baseweb="input"] {{
-        background-color: transparent !important;
-    }}
-    .stTextInput input, .stNumberInput input, .stSelectbox [data-baseweb="select"], [data-testid="stSidebar"] input, textarea, select, input {{
-        color: {text_color} !important;
+    /* 1. Base input wrapper - giving it the unified background */
+    div[data-baseweb="base-input"], div[data-baseweb="select"] {{
         background-color: {input_bg} !important;
         border-radius: 8px !important;
         border: 1px solid {input_border} !important;
-        -webkit-text-fill-color: {text_color} !important; /* Fix for some browsers */
+    }}
+
+    /* 2. Strip backgrounds from all children so they blend into the wrapper */
+    div[data-baseweb="base-input"] *, div[data-baseweb="select"] * {{
+        background-color: transparent !important;
+        color: {text_color} !important;
+        -webkit-text-fill-color: {text_color} !important;
+    }}
+
+    /* 3. Strip the nasty border that Streamlit puts on the actual input tag */
+    .stTextInput input, .stNumberInput input, textarea, select, input {{
+        border: none !important;
+        box-shadow: none !important;
     }}
 
     /* Specific fix for Dropdown (Selectbox) items and popovers */
@@ -214,13 +222,14 @@ def set_design(theme="Light", is_authenticated=False):
         color: {text_color} !important;
     }}
     
-    [data-baseweb="select"] span {{
-        color: {text_color} !important;
-    }}
-
     li[role="option"]:hover {{
         background-color: {metric_val} !important;
         color: #ffffff !important;
+    }}
+    
+    /* Ensure icons match text */
+    div[data-baseweb="base-input"] svg, div[data-baseweb="select"] svg {{
+        fill: {text_color} !important;
     }}
 
     /* Placeholders */
@@ -230,10 +239,14 @@ def set_design(theme="Light", is_authenticated=False):
         -webkit-text-fill-color: {text_color} !important;
     }}
 
-    /* Toggle visibility */
-    .stCheckbox label, .stToggle label, .stRadio label {{
+    /* Universal Widget & Component Text Visibility (Sliders, Uploaders, Metrics, Toggles) */
+    .stCheckbox label, .stToggle label, .stRadio label, .stWidgetLabel p, label, .stSlider p, div[data-baseweb="slider"] div, .stMetric label {{
         color: {text_color} !important;
         font-weight: 600 !important;
+    }}
+    
+    .stFileUploader label, .stFileUploader section, .stFileUploader section p, .stFileUploader section small {{
+        color: {text_color} !important;
     }}
 
     /* Ensure ALL buttons and their text are always visible with high contrast */

@@ -32,12 +32,25 @@ from database_utils import (
 )
 from threading import Thread
 import bcrypt
+import psutil
+import logging
+
+# 1. MUST BE FIRST
+st.set_page_config(page_title="Bioreactor ML Dashboard", layout="wide")
 
 # 1.0 ROOT DIR SETUP
 ROOT_DIR = Path(__file__).parent
 
-# 1. MUST BE FIRST
-st.set_page_config(page_title="Bioreactor ML Dashboard", layout="wide")
+# 1.1 Logging setup for app
+logger = logging.getLogger("BioNexus")
+logger.setLevel(logging.INFO)
+# No handler needed here if database_utils already adds one, but good to be safe:
+if not logger.handlers:
+    from logging.handlers import RotatingFileHandler
+    handler = RotatingFileHandler("app.log", maxBytes=1024*1024, backupCount=5)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 # 1.1 IMAGE HELPER
 def get_base64_of_bin_file(bin_file):
@@ -823,9 +836,20 @@ with st.sidebar:
 st.title("🔬 Bioreactor ML – Prediction Dashboard")
 
 # Create Tabs
-tab_predict, tab_train, tab_explore, tab_history, tab_guide, tab_alerts = st.tabs([
-    "🚀 Predict & Benchmark", "🏋️‍♂️ Train Model", "📊 Data Exploration", "📜 History", "📘 Interpretation Guide", "🔔 Alerts"
-])
+tab_list = ["🚀 Predict & Benchmark", "🏋️‍♂️ Train Model", "📊 Data Exploration", "📜 History", "📘 Interpretation Guide", "🔔 Alerts"]
+is_admin = False
+if 'roles' in st.session_state and st.session_state['roles'] and 'admin' in st.session_state['roles']:
+    is_admin = True
+    tab_list.append("🖥️ System Health")
+
+tabs = st.tabs(tab_list)
+tab_predict = tabs[0]
+tab_train = tabs[1]
+tab_explore = tabs[2]
+tab_history = tabs[3]
+tab_guide = tabs[4]
+tab_alerts = tabs[5]
+tab_monitor = tabs[6] if is_admin else None
 
 with tab_predict:
     st.write("### Predict results or benchmark model performance")
@@ -1448,3 +1472,43 @@ with tab_alerts:
                     st.success(f"✅ Connection successful! Test email sent to {alert_cfg.get('target_email')}")
                 else:
                     st.error("❌ Connection failed. Check your App Password or Server settings.")
+
+if tab_monitor:
+    with tab_monitor:
+        st.write("## 🖥️ System Health & Monitoring")
+        st.caption("Real-time operational metrics and application logs.")
+        
+        m1, m2, m3 = st.columns(3)
+        
+        # CPU/RAM
+        cpu = psutil.cpu_percent()
+        ram = psutil.virtual_memory().percent
+        m1.metric("CPU Usage", f"{cpu}%")
+        m2.metric("Memory Usage", f"{ram}%")
+        
+        # Database Latency (Simulated check)
+        import time
+        start_t = time.time()
+        try:
+            get_history_count(username) # Simple query to check latency
+            latency = (time.time() - start_t) * 1000
+            m3.metric("DB Latency", f"{latency:.1f} ms")
+        except:
+            m3.error("DB Offline")
+
+        st.markdown("---")
+        st.write("### 📜 Application Logs (`app.log`)")
+        if Path("app.log").exists():
+            with open("app.log", "r") as f:
+                log_lines = f.readlines()
+                # Show last 50 lines
+                tail = log_lines[-50:]
+                st.code("".join(tail), language="text")
+        else:
+            st.info("No log file found yet.")
+        
+        if st.button("🗑️ Clear Logs", use_container_width=True):
+            if Path("app.log").exists():
+                with open("app.log", "w") as f:
+                    f.write("")
+                st.rerun()

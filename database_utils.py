@@ -6,6 +6,8 @@ from typing import Dict, List, Optional, Any
 
 import smtplib
 import bcrypt
+import logging
+from logging.handlers import RotatingFileHandler
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
@@ -16,6 +18,17 @@ from contextlib import contextmanager
 import streamlit as st
 from dotenv import load_dotenv
 load_dotenv()  # loads .env file for local development
+
+# ─────────────────────────────────────────────
+# Logging Configuration
+# ─────────────────────────────────────────────
+logger = logging.getLogger("BioNexus")
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = RotatingFileHandler("app.log", maxBytes=1024*1024, backupCount=5)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
 
 # ─────────────────────────────────────────────
 # Connection helper (cached for performance)
@@ -37,17 +50,23 @@ def _get_conn_str() -> str:
 def _get_pool():
     """Initialize a Threaded Connection Pool (Min 1, Max 20)."""
     conn_str = _get_conn_str()
+    logger.info("Initializing Database Connection Pool...")
     return pool.ThreadedConnectionPool(1, 20, conn_str)
+
 
 @contextmanager
 def get_db_connection():
     """Context manager to check out and return connections to the pool safely."""
-    db_pool = _get_pool()
-    conn = db_pool.getconn()
     try:
+        db_pool = _get_pool()
+        conn = db_pool.getconn()
         yield conn
+    except Exception as e:
+        logger.error(f"Database Connection Error: {e}")
+        raise e
     finally:
-        db_pool.putconn(conn)
+        if 'conn' in locals() and conn:
+            db_pool.putconn(conn)
 
 # ─────────────────────────────────────────────
 # Schema initialisation
@@ -191,6 +210,7 @@ def add_user(username, email, password, name=None, role='user', roles=None, appr
         ''', (username, email, name, password, role, json.dumps(roles), approved))
         conn.commit()
         cursor.close()
+        logger.info(f"User added/updated: {username}")
 
 
 def update_user_approval(username, approved):
@@ -264,6 +284,7 @@ def delete_user(username):
         cursor.execute("DELETE FROM users WHERE username = %s", (username,))
         conn.commit()
         cursor.close()
+        logger.warning(f"User deleted: {username}")
 
 
 def update_user_role(username, role):
@@ -332,6 +353,7 @@ def delete_history_item(prediction_id: int, username: str):
         cursor.execute('DELETE FROM predictions WHERE id = %s AND username = %s', (prediction_id, username))
         conn.commit()
         cursor.close()
+        logger.info(f"History item deleted: ID {prediction_id} by user {username}")
 
 
 # ─────────────────────────────────────────────

@@ -718,10 +718,9 @@ def align_columns(df: pd.DataFrame, schema: dict):
 def compute_rmse(y_true, y_pred):
     return float(math.sqrt(mean_squared_error(y_true, y_pred)))
 
-@st.cache_data(show_spinner="🔮 Generating predictions...")
-def get_predictions(_model, _X_aligned):
-    """Cached prediction wrapper. Prefix with _ to ignore from hash (model objects are not hashable by st.cache_data)."""
-    return _model.predict(_X_aligned)
+def get_predictions(model, X_aligned):
+    """Prediction wrapper."""
+    return model.predict(X_aligned)
 
 # ----------------------------- Helper Visuals -----------------------------
 def plot_correlation_heatmap(df: pd.DataFrame):
@@ -1177,7 +1176,7 @@ with tab_explore:
             
         with col2:
             st.write("#### 📈 Time-Series Trends")
-            all_cols = list([c for c in explore_df.columns if c != "Time_hours"])
+            all_cols = [c for c in explore_df.columns if c != "Time_hours"]
             selected_metrics = st.multiselect(
                 "Select parameters",
                 options=all_cols,

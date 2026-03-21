@@ -295,12 +295,12 @@ def save_prediction(username: str, inputs: Dict[str, Any], results: Dict[str, An
         cursor.close()
 
 
-def get_user_history(username: str) -> List[Dict[str, Any]]:
+def get_user_history(username: str, limit: int = 10, offset: int = 0) -> List[Dict[str, Any]]:
     with get_db_connection() as conn:
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute(
-            'SELECT id, timestamp, inputs, results, model_name FROM predictions WHERE username = %s ORDER BY timestamp DESC',
-            (username,)
+            'SELECT id, timestamp, inputs, results, model_name FROM predictions WHERE username = %s ORDER BY timestamp DESC LIMIT %s OFFSET %s',
+            (username, limit, offset)
         )
         rows = cursor.fetchall()
         cursor.close()
@@ -315,6 +315,15 @@ def get_user_history(username: str) -> List[Dict[str, Any]]:
             "model_name": row['model_name']
         })
     return history
+
+
+def get_history_count(username: str) -> int:
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute('SELECT COUNT(*) FROM predictions WHERE username = %s', (username,))
+        count = cursor.fetchone()[0]
+        cursor.close()
+    return count
 
 
 def delete_history_item(prediction_id: int, username: str):

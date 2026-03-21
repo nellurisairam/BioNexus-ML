@@ -28,7 +28,7 @@ import base64
 from database_utils import (
     get_authenticator_config, update_user_approval, add_user, init_db, list_users, 
     delete_user, update_user_role, save_prediction, get_user_history, delete_history_item,
-    get_alert_config, save_alert_config, send_email_alert
+    get_alert_config, save_alert_config, send_email_alert, get_history_count
 )
 from threading import Thread
 import bcrypt
@@ -1176,10 +1176,33 @@ with tab_history:
     st.write("### 📜 Prediction History")
     st.caption("View and manage your past model runs and benchmark results.")
     
-    history = get_user_history(username)
+    # 1. Pagination Config
+    items_per_page = 10
+    total_items = get_history_count(username)
+    total_pages = max(1, math.ceil(total_items / items_per_page))
+    
+    if "history_page" not in st.session_state:
+        st.session_state.history_page = 1
+    
+    # Simple navigation header
+    col_p1, col_p2, col_p3 = st.columns([1, 2, 1])
+    with col_p1:
+        if st.button("⬅️ Previous", disabled=(st.session_state.history_page <= 1), use_container_width=True):
+            st.session_state.history_page -= 1
+            st.rerun()
+    with col_p2:
+        st.markdown(f"<p style='text-align: center; margin-top: 10px;'>Page <b>{st.session_state.history_page}</b> of {total_pages} ({total_items} total runs)</p>", unsafe_allow_html=True)
+    with col_p3:
+        if st.button("Next ➡️", disabled=(st.session_state.history_page >= total_pages), use_container_width=True):
+            st.session_state.history_page += 1
+            st.rerun()
+
+    # 2. Fetch data for current page
+    offset = (st.session_state.history_page - 1) * items_per_page
+    history = get_user_history(username, limit=items_per_page, offset=offset)
     
     if not history:
-        st.info("No history found. Try running a prediction in the 'Predict' tab.")
+        st.info("No recorded history for this page.")
     else:
         # Prepare table data
         table_data = []
@@ -1194,7 +1217,7 @@ with tab_history:
             table_data.append({
                 "ID": item['id'],
                 "Timestamp": item['timestamp'],
-                "Model": item['model_name'].split('/')[-1],
+                "Model": str(item['model_name']).split('/')[-1].split('\\')[-1],
                 "Summary": summary,
                 "Mode": item['inputs'].get('mode', 'N/A')
             })
@@ -1209,7 +1232,7 @@ with tab_history:
         id_to_item = {str(h['id']): h for h in history}
         
         item_id_raw = st.selectbox(
-            "Select Run ID to Inspect/Delete", 
+            "Select Run ID from this page to Inspect/Delete", 
             options=[str(d['ID']) for d in table_data],
             format_func=lambda x: f"Run ID: {x} | {str(id_to_item[x]['timestamp']).split(' ')[0]}" if x in id_to_item else x
         )
@@ -1226,18 +1249,24 @@ with tab_history:
                 if st.button("🗑️ Delete from History", use_container_width=True, type="primary"):
                     delete_history_item(int(item_id_raw), username)
                     st.toast(f"Deleted run {item_id_raw}")
+                    # If we delete the last item on a page, maybe go back? 
+                    # Simpler is just to rerun
                     st.rerun()
         
-        # Download all history
-        full_df = pd.DataFrame(history)
-        csv_data = full_df.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="📥 Download Full History (CSV)",
-            data=csv_data,
-            file_name=f"history_{username}.csv",
-            mime='text/csv',
-            use_container_width=True
-        )
+        st.divider()
+        # Download CURRENT PAGE or ALL? User requested "Pagination", 
+        # but download usually implies everything. Let's offer everything for download.
+        if st.button("💾 Prepare Full History Download"):
+             full_history = get_user_history(username, limit=1000, offset=0)
+             full_df = pd.DataFrame(full_history)
+             csv_data = full_df.to_csv(index=False).encode('utf-8')
+             st.download_button(
+                label="📥 Click to Download Full History (CSV)",
+                data=csv_data,
+                file_name=f"history_full_{username}.csv",
+                mime='text/csv',
+                use_container_width=True
+            )
 
 with tab_guide:
     st.write("## 📘 Bioprocessor's Analytics Masterclass")

@@ -855,15 +855,21 @@ with tab_predict:
     st.caption("Use saved sklearn Pipeline model artifacts (.joblib) and schema (.json) to predict Product_Titer_gL from process data.")
 
     st.sidebar.header("⚙️ Configuration")
+    # Build dynamic model list from models/ directory
+    model_dir = ROOT_DIR / 'models'
+    model_dir.mkdir(parents=True, exist_ok=True)
+    available_models = sorted([str(p) for p in model_dir.glob('*.joblib')])
+    
+    # Pre-select RidgeCV if available, otherwise first model
+    default_idx = 0
+    ridge_path = str(model_dir / 'model_ridgecv.joblib')
+    if ridge_path in available_models:
+        default_idx = available_models.index(ridge_path)
+
     model_choice = st.sidebar.selectbox(
         "Select default model path",
-        options=[
-            str(ROOT_DIR / 'models/model_ridgecv.joblib'),
-            str(ROOT_DIR / 'models/model_gbr.joblib'),
-            str(ROOT_DIR / 'models/model_linear.joblib'),
-            'Custom...'
-        ],
-        index=0
+        options=available_models + ['Custom...'],
+        index=default_idx
     )
 
     if model_choice == 'Custom...':
@@ -1097,9 +1103,9 @@ with tab_train:
     c1, c2 = st.columns(2)
     with c1:
         target_name = st.text_input("Target Column", value="Product_Titer_gL")
-        out_model_name = st.text_input("Output Model Path", value="outputs/model_custom.joblib")
+        out_model_name = st.text_input("Output Model Path", value="models/model_custom.joblib")
     with c2:
-        out_schema_name = st.text_input("Output Schema Path", value="outputs/feature_schema_custom.json")
+        out_schema_name = st.text_input("Output Schema Path", value="models/feature_schema_custom.json")
     
     if st.button("🔥 Start Training"):
         if train_upload is not None:
@@ -1124,7 +1130,8 @@ with tab_train:
                         pipe.fit(X_train, y_train)
                         
                         # 3. Save
-                        Path("outputs").mkdir(exist_ok=True)
+                        Path(out_model_name).parent.mkdir(parents=True, exist_ok=True)
+                        Path(out_schema_name).parent.mkdir(parents=True, exist_ok=True)
                         dump(pipe, out_model_name)
                         
                         schema = {
@@ -1176,11 +1183,16 @@ with tab_explore:
             
         with col2:
             st.write("#### 📈 Time-Series Trends")
-            all_cols = [c for c in explore_df.columns if c != "Time_hours"]
+            all_cols = [str(c) for c in explore_df.columns if str(c) != "Time_hours"]
+            default_cols = ["Temperature_C", "pH"]
+            if not all(c in all_cols for c in default_cols):
+                # Use a more explicit way to get first 2 items to satisfy Pyre
+                default_cols = all_cols[:2] if len(all_cols) >= 2 else all_cols
+                
             selected_metrics = st.multiselect(
                 "Select parameters",
                 options=all_cols,
-                default=["Temperature_C", "pH"] if "Temperature_C" in all_cols and "pH" in all_cols else (all_cols[:2] if len(all_cols) >= 2 else all_cols)
+                default=default_cols
             )
             if selected_metrics:
                 ts_fig = plot_time_series(explore_df, selected_metrics)

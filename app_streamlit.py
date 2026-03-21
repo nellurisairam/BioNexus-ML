@@ -652,6 +652,7 @@ def read_csv(uploaded_file) -> pd.DataFrame:
         return pd.read_csv(uploaded_file)
 
 # --- Shared preprocessing (same as predict.py) ---
+@st.cache_data(show_spinner="🧮 Preprocessing data...")
 def preprocess(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df.columns = df.columns.str.strip()
@@ -678,6 +679,7 @@ def preprocess(df: pd.DataFrame) -> pd.DataFrame:
 
     return df
 
+@st.cache_data(show_spinner="🔗 Aligning schema...")
 def align_columns(df: pd.DataFrame, schema: dict):
     feats = schema['features']
     original_cols = list(df.columns)
@@ -702,6 +704,11 @@ def align_columns(df: pd.DataFrame, schema: dict):
 
 def compute_rmse(y_true, y_pred):
     return float(math.sqrt(mean_squared_error(y_true, y_pred)))
+
+@st.cache_data(show_spinner="🔮 Generating predictions...")
+def get_predictions(_model, _X_aligned):
+    """Cached prediction wrapper. Prefix with _ to ignore from hash (model objects are not hashable by st.cache_data)."""
+    return _model.predict(_X_aligned)
 
 # ----------------------------- Helper Visuals -----------------------------
 def plot_correlation_heatmap(df: pd.DataFrame):
@@ -896,7 +903,7 @@ with tab_predict:
 
             # Prediction or Benchmark logic
             if mode == "Predict (unlabeled)":
-                preds = clf.predict(X_aligned)
+                preds = get_predictions(clf, X_aligned)
                 out = input_df.copy()
                 # Use pd.Series to auto-align based on index (handles dropped rows as NaN)
                 out['Pred_Product_Titer_gL'] = pd.Series(preds, index=X_aligned.index)
@@ -991,7 +998,7 @@ with tab_predict:
                     if len(y_true) == 0:
                         st.error("No valid numeric target values found in the target column after preprocessing.")
                     else:
-                        preds = clf.predict(X_eval)
+                        preds = get_predictions(clf, X_eval)
                         r2 = r2_score(y_true, preds)
                         mae = mean_absolute_error(y_true, preds)
                         rmse = compute_rmse(y_true, preds)

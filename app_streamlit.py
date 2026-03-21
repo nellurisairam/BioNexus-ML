@@ -31,6 +31,7 @@ from database_utils import (
     get_alert_config, save_alert_config, send_email_alert, get_history_count, LOG_FILE
 )
 from threading import Thread
+import concurrent.futures
 import bcrypt
 import psutil
 import logging
@@ -720,9 +721,39 @@ def align_columns(df: pd.DataFrame, schema: dict):
 def compute_rmse(y_true, y_pred):
     return float(math.sqrt(mean_squared_error(y_true, y_pred)))
 
-def get_predictions(model, X_aligned):
-    """Prediction wrapper."""
-    return model.predict(X_aligned)
+def get_predictions(model, X_aligned, use_threads=False, batch_size=5000, progress_callback=None):
+    """Prediction wrapper with optional threading and progress feedback."""
+    if not use_threads or len(X_aligned) <= batch_size:
+        preds = model.predict(X_aligned)
+        if progress_callback:
+            progress_callback(1.0)
+        return preds
+
+    # Threaded batch processing
+    n_samples = len(X_aligned)
+    n_batches = math.ceil(n_samples / batch_size)
+    all_preds = []
+    
+    # We use a ThreadPoolExecutor for I/O bound or GIL-releasing tasks (like some sklearn/numpy ops)
+    # For pure CPU bound scikit-learn, joblib (internal to sklearn) is often better, 
+    # but ThreadPool is safer for Streamlit's environment.
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        # Create batches
+        futures = []
+        for i in range(n_batches):
+            start = i * batch_size
+            end = min((i + 1) * batch_size, n_samples)
+            batch_X = X_aligned.iloc[start:end]
+            futures.append(executor.submit(model.predict, batch_X))
+        
+        # Collect results in order of completion but track for sorting if needed (here we maintain order anyway)
+        # Actually, to maintain order for pd.Series alignment, we should collect in submission order
+        for i, future in enumerate(futures):
+            all_preds.append(future.result())
+            if progress_callback:
+                progress_callback((i + 1) / n_batches)
+                
+    return np.concatenate(all_preds)
 
 # ----------------------------- Helper Visuals -----------------------------
 def plot_correlation_heatmap(df: pd.DataFrame):
@@ -885,6 +916,14 @@ with tab_predict:
     mode = st.sidebar.radio("Mode", ["Predict (unlabeled)", "Benchmark (labeled)"]) 
 
     st.sidebar.markdown("---")
+    st.sidebar.write("**Performance**")
+    use_threads = st.sidebar.toggle("🧵 Threaded Prediction", value=False, help="Process data in parallel batches. Best for >10k rows.")
+    if use_threads:
+        batch_size = st.sidebar.select_slider("Batch Size", options=[100, 500, 1000, 5000, 10000], value=5000)
+    else:
+        batch_size = 5000
+
+    st.sidebar.markdown("---")
     st.sidebar.write("**Actions**")
     if st.sidebar.button("▶️ Run"):
         st.session_state.has_run = True
@@ -935,11 +974,20 @@ with tab_predict:
 
             # Prediction or Benchmark logic
             if mode == "Predict (unlabeled)":
-                preds = get_predictions(clf, X_aligned)
+                if use_threads:
+                    p_bar = st.progress(0, text="Initializing threaded batches...")
+                    def update_p(val):
+                        p_bar.progress(val, text=f"Processing: {int(val*100)}% complete")
+                    preds = get_predictions(clf, X_aligned, use_threads=True, batch_size=batch_size, progress_callback=update_p)
+                    p_bar.empty()
+                else:
+                    with st.spinner("Calculating..."):
+                        preds = get_predictions(clf, X_aligned)
+                
                 out = input_df.copy()
                 # Use pd.Series to auto-align based on index (handles dropped rows as NaN)
                 out['Pred_Product_Titer_gL'] = pd.Series(preds, index=X_aligned.index)
-                st.success("Predictions completed.")
+                st.success(f"Predictions completed ({len(preds):,} samples).")
                 
                 # --- AUTO SAVE HISTORY ---
                 save_prediction(
@@ -1030,7 +1078,16 @@ with tab_predict:
                     if len(y_true) == 0:
                         st.error("No valid numeric target values found in the target column after preprocessing.")
                     else:
-                        preds = get_predictions(clf, X_eval)
+                        if use_threads:
+                            p_bar = st.progress(0, text="Benchmarking in batches...")
+                            def update_p(val):
+                                p_bar.progress(val, text=f"Benchmarking: {int(val*100)}% complete")
+                            preds = get_predictions(clf, X_eval, use_threads=True, batch_size=batch_size, progress_callback=update_p)
+                            p_bar.empty()
+                        else:
+                            with st.spinner("Calculating benchmark..."):
+                                preds = get_predictions(clf, X_eval)
+                        
                         r2 = r2_score(y_true, preds)
                         mae = mean_absolute_error(y_true, preds)
                         rmse = compute_rmse(y_true, preds)

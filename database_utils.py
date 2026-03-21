@@ -22,10 +22,12 @@ load_dotenv()  # loads .env file for local development
 # ─────────────────────────────────────────────
 # Logging Configuration
 # ─────────────────────────────────────────────
+LOG_FILE = Path(__file__).parent / "app.log"
+
 logger = logging.getLogger("BioNexus")
 logger.setLevel(logging.INFO)
 if not logger.handlers:
-    handler = RotatingFileHandler("app.log", maxBytes=1024*1024, backupCount=5)
+    handler = RotatingFileHandler(LOG_FILE, maxBytes=1024*1024, backupCount=5)
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
@@ -50,7 +52,7 @@ def _get_conn_str() -> str:
 def _get_pool():
     """Initialize a Threaded Connection Pool (Min 1, Max 20)."""
     conn_str = _get_conn_str()
-    logger.info("Initializing Database Connection Pool...")
+    logger.info(f"Establishing database connection pool for BioNexus...")
     return pool.ThreadedConnectionPool(1, 20, conn_str)
 
 
@@ -160,9 +162,11 @@ def init_db():
                 json.dumps(["admin", "user"]),
                 True
             ))
+            logger.info("Default admin user created.")
 
         conn.commit()
         cursor.close()
+        logger.info("Database schema initialized successfully.")
 
 
 def save_config(cookie_config):
@@ -219,6 +223,7 @@ def update_user_approval(username, approved):
         cursor.execute("UPDATE users SET approved = %s WHERE username = %s", (approved, username))
         conn.commit()
         cursor.close()
+    logger.info(f"User approval changed: {username} -> {'Approved' if approved else 'Revoked'}")
 
 
 def get_authenticator_config():
@@ -228,7 +233,7 @@ def get_authenticator_config():
         # Cookie config
         cursor.execute("SELECT value FROM config WHERE key = %s", ("cookie",))
         cookie_row = cursor.fetchone()
-        cookie = json.loads(cookie_row['value']) if cookie_row else {}
+        cookie: Any = json.loads(cookie_row['value']) if cookie_row else {}
 
         # Users
         cursor.execute("SELECT * FROM users")
@@ -237,7 +242,7 @@ def get_authenticator_config():
 
     usernames = {}
     for row in rows:
-        user_data = dict(row)
+        user_data: Any = dict(row)
         user_data['roles'] = json.loads(user_data['roles']) if user_data['roles'] else []
         user_data['approved'] = bool(user_data['approved'])
         user_data['logged_in'] = bool(user_data['logged_in'])
@@ -314,6 +319,7 @@ def save_prediction(username: str, inputs: Dict[str, Any], results: Dict[str, An
         ))
         conn.commit()
         cursor.close()
+    logger.info(f"Prediction saved: User={username}, Model={model_name}")
 
 
 def get_user_history(username: str, limit: int = 10, offset: int = 0) -> List[Dict[str, Any]]:

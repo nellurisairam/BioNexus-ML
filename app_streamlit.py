@@ -28,7 +28,7 @@ import base64
 from database_utils import (
     get_authenticator_config, update_user_approval, add_user, init_db, list_users, 
     delete_user, update_user_role, save_prediction, get_user_history, delete_history_item,
-    get_alert_config, save_alert_config, send_email_alert, get_history_count
+    get_alert_config, save_alert_config, send_email_alert, get_history_count, LOG_FILE
 )
 from threading import Thread
 import bcrypt
@@ -47,7 +47,7 @@ logger.setLevel(logging.INFO)
 # No handler needed here if database_utils already adds one, but good to be safe:
 if not logger.handlers:
     from logging.handlers import RotatingFileHandler
-    handler = RotatingFileHandler("app.log", maxBytes=1024*1024, backupCount=5)
+    handler = RotatingFileHandler(LOG_FILE, maxBytes=1024*1024, backupCount=5)
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
@@ -645,6 +645,8 @@ if not st.session_state.get("authentication_status"):
 # User Context
 user_info = config["credentials"]["usernames"].get(username)
 user_email = user_info.get('email', '') if user_info else ''
+if username:
+    logger.info(f"Dashboard session active: {username}")
 
 # ----------------------------- Helpers -----------------------------
 @st.cache_resource(show_spinner=False)
@@ -915,6 +917,7 @@ with tab_predict:
     # ----------------------------- Run -----------------------------
     if st.session_state.get("has_run") and input_df is not None:
         try:
+            logger.info(f"Running prediction: Model={model_path}, Source={src_desc}")
             clf = load_model(model_path)
             schema = load_schema(schema_path)
             target_col = schema.get('target', 'Product_Titer_gL')
@@ -1110,6 +1113,7 @@ with tab_train:
     if st.button("🔥 Start Training"):
         if train_upload is not None:
             try:
+                logger.info(f"Training started: Model={out_model_name}, Target={target_name}")
                 with st.spinner("Preprocessing and training..."):
                     raw_train_df = pd.read_csv(train_upload)
                     if target_name not in raw_train_df.columns:
@@ -1508,18 +1512,22 @@ if tab_monitor:
             m3.error("DB Offline")
 
         st.markdown("---")
-        st.write("### 📜 Application Logs (`app.log`)")
-        if Path("app.log").exists():
-            with open("app.log", "r") as f:
+        st.write(f"### 📜 Application Logs (`{LOG_FILE.name}`)")
+        if LOG_FILE.exists():
+            with open(LOG_FILE, "r") as f:
                 log_lines = f.readlines()
-                # Show last 50 lines
-                tail = log_lines[-50:]
-                st.code("".join(tail), language="text")
+                if not log_lines:
+                    st.info("Log file is currently empty.")
+                else:
+                    # Show last 50 lines
+                    tail = log_lines[-50:]
+                    st.code("".join(tail), language="text")
         else:
-            st.info("No log file found yet.")
+            st.info(f"No log file found at {LOG_FILE}")
         
         if st.button("🗑️ Clear Logs", use_container_width=True):
-            if Path("app.log").exists():
-                with open("app.log", "w") as f:
+            if LOG_FILE.exists():
+                with open(LOG_FILE, "w") as f:
                     f.write("")
+                logger.warning(f"Logs cleared by admin: {username}")
                 st.rerun()

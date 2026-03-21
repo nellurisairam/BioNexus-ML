@@ -644,7 +644,8 @@ if not st.session_state.get("authentication_status"):
     st.stop()
 
 # User Context
-user_info = config["credentials"]["usernames"].get(username)
+username = st.session_state.get("username")
+user_info = config["credentials"]["usernames"].get(username) if username else None
 user_email = user_info.get('email', '') if user_info else ''
 if username:
     logger.info(f"Dashboard session active: {username}")
@@ -868,20 +869,9 @@ with st.sidebar:
 st.title("🔬 Bioreactor ML – Prediction Dashboard")
 
 # Create Tabs
-tab_list = ["🚀 Predict & Benchmark", "🏋️‍♂️ Train Model", "📊 Data Exploration", "📜 History", "📘 Interpretation Guide", "🔔 Alerts"]
-is_admin = False
-if 'roles' in st.session_state and st.session_state['roles'] and 'admin' in st.session_state['roles']:
-    is_admin = True
-    tab_list.append("🖥️ System Health")
-
+tab_list = ["🚀 Predict & Benchmark", "🏋️‍♂️ Train Model", "📊 Data Exploration", "📜 History", "📘 Interpretation Guide", "🔔 Alerts", "🖥️ System Health"]
 tabs = st.tabs(tab_list)
-tab_predict = tabs[0]
-tab_train = tabs[1]
-tab_explore = tabs[2]
-tab_history = tabs[3]
-tab_guide = tabs[4]
-tab_alerts = tabs[5]
-tab_monitor = tabs[6] if is_admin else None
+tab_predict, tab_train, tab_explore, tab_history, tab_guide, tab_alerts, tab_monitor = tabs
 
 with tab_predict:
     st.write("### Predict results or benchmark model performance")
